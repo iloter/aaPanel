@@ -278,12 +278,14 @@ class main:
                 # "api_prefix": self.PROXY_PREFIX + "/api",
             }
         info = self._app_info_map(app)
+        env = self._read_env(app, mask=False)
         ports = {}
         for key in self.DEFAULT_PORTS:
             ports[key] = self._port_from_app(app, key)
 
-        admin_password = self._first_value(info.get("ADMIN_PASSWORD"), self._read_env(app).get("ADMIN_PASSWORD"))
-        sso_secret = self._first_value(info.get("AAPANEL_SSO_SECRET"), self._read_env(app).get("AAPANEL_SSO_SECRET"))
+        admin_username = self._first_value(env.get("ADMIN_USERNAME"), info.get("ADMIN_USERNAME"))
+        admin_password = self._first_value(env.get("ADMIN_PASSWORD"), info.get("ADMIN_PASSWORD"))
+        sso_secret = self._first_value(env.get("AAPANEL_SSO_SECRET"), info.get("AAPANEL_SSO_SECRET"))
         direct_console_url = self._direct_console_url(app)
         data = {
             "installed": True,
@@ -299,7 +301,7 @@ class main:
             "path": self._service_path(app),
             "ports": ports,
             "admin": {
-                "username": self._first_value(info.get("ADMIN_USERNAME"), self._read_env(app).get("ADMIN_USERNAME")),
+                "username": admin_username,
                 "password": admin_password if include_secret else self._mask_value("ADMIN_PASSWORD", admin_password),
             },
             "sso": {
@@ -1357,78 +1359,6 @@ class main:
         if docker_app_info:
             port_result["app_info"] = docker_app_info
 
-        # todo 调试用  -----------
-        conflicts =  [
-                {
-                    "port": 465,
-                    "source": "process",
-                    "pid": 2514239,
-                    "process_name": "master",
-                    "service": "postfix",
-                    "can_stop": True
-                },
-                {
-                    "port": 995,
-                    "source": "process",
-                    "pid": 2514133,
-                    "process_name": "dovecot",
-                    "service": "dovecot",
-                    "can_stop": True
-                },
-                {
-                    "port": 25,
-                    "source": "process",
-                    "pid": None,
-                    "process_name": "",
-                    "service": "",
-                    "can_stop": False
-                },
-                {
-                    "port": 993,
-                    "source": "process",
-                    "pid": 2514133,
-                    "process_name": "dovecot",
-                    "service": "dovecot",
-                    "can_stop": True
-                },
-                {
-                    "port": 587,
-                    "source": "process",
-                    "pid": 2514239,
-                    "process_name": "master",
-                    "service": "postfix",
-                    "can_stop": True
-                },
-                {
-                    "port": 143,
-                    "source": "process",
-                    "pid": 2514133,
-                    "process_name": "dovecot",
-                    "service": "dovecot",
-                    "can_stop": True
-                },
-                {
-                    "port": 25,
-                    "source": "process",
-                    "pid": 2588968,
-                    "process_name": "smtpd",
-                    "service": "postfix",
-                    "can_stop": True
-                },
-                {
-                    "port": 110,
-                    "source": "process",
-                    "pid": 2514133,
-                    "process_name": "dovecot",
-                    "service": "dovecot",
-                    "can_stop": True
-                }
-            ]
-        ok = False
-        port_result['conflicts'] =conflicts
-        port_result['ok'] =ok
-        # todo 调试用  -----------
-
         return self._ok(port_result)
 
 
@@ -1552,11 +1482,18 @@ class main:
     def _sso_secret(self, app):
         info = self._app_info_map(app)
         env = self._read_env(app, mask=False)
-        return self._first_value(info.get("AAPANEL_SSO_SECRET"), env.get("AAPANEL_SSO_SECRET"))
+        return self._first_value(env.get("AAPANEL_SSO_SECRET"), info.get("AAPANEL_SSO_SECRET"))
 
     def _ensure_sso_secret(self, app):
-        secret = self._sso_secret(app)
+        env = self._read_env(app, mask=False)
+        secret = self._first_value(env.get("AAPANEL_SSO_SECRET"))
         if secret:
+            return secret, False
+
+        info = self._app_info_map(app)
+        secret = self._first_value(info.get("AAPANEL_SSO_SECRET"))
+        if secret:
+            self._write_env_value(app, "AAPANEL_SSO_SECRET", secret)
             return secret, False
 
         secret = public.GetRandomString(48)

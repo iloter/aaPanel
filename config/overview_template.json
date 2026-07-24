@@ -99,6 +99,17 @@
           "href": "security"
         },
         "params": []
+      },
+      {
+          "title": "Memo",
+          "name": "memo",
+          "status": true,
+          "type": "model",
+          "source": {
+              "click": "model",
+              "href": "memo"
+          },
+          "params": []
       }
     ]
   },

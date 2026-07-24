@@ -379,7 +379,7 @@
 			"index_79": "Apakah Anda menarik seluruh bagian IP?",
 			"index_80": "Setelah menambahkan ke daftar putih URL, URL ini tidak akan lagi dipertahankan. Apakah Anda ingin melanjutkan operasi? ",
 			"index_81": "Apakah Anda ingin menambahkan daftar putih parameter URI?",
-			"index_82": "Apakah Anda ingin menambahkan {IP} ke daftar hitam IP?"
+			"index_82": "Apakah Anda ingin menambahkan {ip} ke daftar hitam IP?"
 		},
 		"Rules": {
 			"index_1": "IP whitelist",

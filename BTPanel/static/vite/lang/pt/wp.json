@@ -171,7 +171,7 @@
 			"index_43": "Por favor, feche e limpe o cache antes de ligar o modo de manutenção.",
 			"index_44": "Nota: Para evitar que o site seja rebaixado pelos mecanismos de indexação, por favor, não habilite o modo de manutenção por muito tempo.",
 			"index_45": "Recomenda-se carregar arquivos HTML para modelos, e usar URLs de dados para arquivos estáticos de modelos.",
-			"index_46": "Se você quiser que seu modelo use a função de configuração de modelo do aapanel, você pode iniciar o modo de manutenção uma vez e modificar o arquivo /wp-content/mintensionce/mintensione-template.html, mantendo o marcador de posição '{{}}'."
+			"index_46": "Se você quiser que seu modelo use a função de configuração de modelo do aapanel, você pode iniciar o modo de manutenção uma vez e modificar o arquivo /wp-content/mintensionce/mintensione-template.html, mantendo o marcador de posição {'{'}{'{'}{'}'}{'}'}."
 		},
 		"Label": {
 			"index_1": "Redefinir senha",

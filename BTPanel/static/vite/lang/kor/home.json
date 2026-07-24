@@ -101,6 +101,7 @@
 		"systemRestartReminder": "시스템 재시작 알림",
 		"serverRestartedAt": "귀하의 서버가 {time}에 다시 시작되었습니다.",
 		"iKnow": "확인",
+		"memoEmpty": "현재 내용이 비어 있습니다. 클릭하여 편집하세요.",
 		"Install": {
 			"index_1_1": "다음 1 클릭 패키지를 사용하는 것이 좋습니다. 주문시 또는 {soft_}에서 직접 선택하여 LEMP를 설치하는 것이 좋습니다.",
 			"index_1_2": "소프트웨어 스토어",
@@ -220,7 +221,7 @@
 			"index_22": "악성 파일 처리",
 			"index_23": "OSS 스캔",
 			"index_24": "OSS 마운트 디렉토리 스캔 활성화",
-			"index_25": "자동 차단 스위치",
+			"index_25": "파일 격리",
 			"index_26": "동적 차단(Kill) 스위치",
 			"index_27": "현재 시스템에 OSS 디렉토리가 마운트되지 않아 OSS 스캔을 활성화할 수 없습니다.",
 			"index_28": "실시간 차단 활성화",
@@ -323,7 +324,7 @@
 				"description": "몇 분 안에 첫 번째 프로젝트를 설정해 보세요.",
 				"softwarePage": "소프트웨어 페이지",
 				"lastConfig": "Last config: ",
-				"skipWizard": "마법사 건너뛰기",
+				"skipWizard": "건너뛰기",
 				"options": {
 					"wordpress": {
 						"title": "WordPress 사이트 만들기",

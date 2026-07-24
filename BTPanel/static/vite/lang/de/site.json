@@ -313,7 +313,7 @@
 			"index_45": "Zertifikatmarke",
 			"index_46": "Zertifikatdomäne (en)",
 			"index_47": "Abgelaufen",
-			"index_48": "{Datum}, Exp in {Days} Days",
+			"index_48": "{date}, Exp in {days} Days",
 			"index_49": "Erzwingen Https",
 			"index_50": "Privatschlüssel (Schlüssel)",
 			"index_51": "Zertifikat (CRT/PEM)",

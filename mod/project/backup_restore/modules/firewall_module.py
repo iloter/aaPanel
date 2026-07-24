@@ -9,6 +9,7 @@
 import os
 import sys
 import warnings
+import json
 
 if "/www/server/panel/class" not in sys.path:
     sys.path.insert(0, "/www/server/panel/class")
@@ -33,6 +34,32 @@ class FirewallModule(BaseUtil, ConfigManager):
         super().__init__()
         self.base_path = '/www/backup/backup_restore'
         self.bakcup_task_json = self.base_path + '/backup_task.json'
+
+    @staticmethod
+    def _result_success(result):
+        if not isinstance(result, dict):
+            return False
+        return result.get('status') in [0, True]
+
+    @staticmethod
+    def _rule_file_has_data(file_path):
+        if not file_path or not os.path.exists(file_path):
+            return False
+        content = public.ReadFile(file_path)
+        if not content:
+            return False
+        content = content.strip()
+        if not content:
+            return False
+        try:
+            data = json.loads(content)
+            if isinstance(data, dict):
+                return bool(data)
+            if isinstance(data, list):
+                return len(data) > 0
+        except:
+            pass
+        return bool([line for line in content.splitlines() if line.strip()])
 
     def backup_firewall_data(self, timestamp):
         with app.app_context():
@@ -78,8 +105,12 @@ class FirewallModule(BaseUtil, ConfigManager):
                             self.print_log(public.lang("Firewall forwarding rules ✓"), 'backup')
                             firewall_info["forward_data_path"] = backup_path + "/" + file_name
                         elif "country" in file_name:
+                            country_backup_file = backup_path + "/" + file_name
+                            if not self._rule_file_has_data(country_backup_file):
+                                self.print_log(public.lang("Firewall region rules skipped: no rules"), 'backup')
+                                continue
                             self.print_log(public.lang("Firewall region rules ✓"), 'backup')
-                            firewall_info["country_data_path"] = backup_path + "/" + file_name
+                            firewall_info["country_data_path"] = country_backup_file
 
                 # 将防火墙信息写入备份配置文件
                 data_list = self.get_backup_data_list(timestamp)
@@ -120,6 +151,8 @@ class FirewallModule(BaseUtil, ConfigManager):
             self.init_firewall_data()
             resotre_data = self.get_restore_data_list(timestamp)
             firewall_data = resotre_data['data_list']['firewall']
+            firewall_data['restore_status'] = 1
+            self.update_restore_data_list(timestamp, resotre_data)
             port_rule_file = firewall_data.get('port_data_path')
             try:
                 if port_rule_file:
@@ -154,12 +187,31 @@ class FirewallModule(BaseUtil, ConfigManager):
                 country_rule_file = firewall_data.get('country_data_path')
                 if country_rule_file:
                     if os.path.exists(country_rule_file):
+                        if not self._rule_file_has_data(country_rule_file):
+                            self.print_log(public.lang("Firewall region rules skipped: no rules"), "restore")
+                            self.print_log(public.lang("Starting firewall restart"), "restore")
+                            firewall_com().set_status(public.to_dict_obj({'status': 1}))
+                            self.print_log(public.lang("Firewall restart completed"), "restore")
+                            resotre_data['data_list']['firewall']['status'] = 2
+                            resotre_data['data_list']['firewall']['restore_status'] = 2
+                            self.update_restore_data_list(timestamp, resotre_data)
+                            return
                         self.print_log(public.lang("Starting restoration of firewall region rules"), "restore")
-                        public.ExecShell('\cp -rpa {}  /www/server/panel/data/firewall'.format(country_rule_file))
                         country_rule_file_last_path = country_rule_file.split("/")[-1]
-                        result = safe_firewall_main().import_rules(
+                        target_country_rule_file = "/www/server/panel/data/firewall/{}".format(country_rule_file_last_path)
+                        public.ExecShell('\cp -rpa {}  /www/server/panel/data/firewall'.format(country_rule_file))
+                        if not os.path.exists(target_country_rule_file):
+                            self.print_log(public.lang("Failed to restore firewall region rules"), "restore")
+                            resotre_data['data_list']['firewall']['status'] = 3
+                            resotre_data['data_list']['firewall']['restore_status'] = 3
+                            resotre_data['data_list']['firewall']['err_msg'] = "Firewall region rule file copy failed"
+                            self.update_restore_data_list(timestamp, resotre_data)
+                            return
+
+                        firewall_obj = safe_firewall_main()
+                        result = firewall_obj.import_rules(
                             public.to_dict_obj({'rule_name': 'country_rule', 'file_name': country_rule_file_last_path}))
-                        if result['status'] == 0:
+                        if self._result_success(result):
                             self.print_log(public.lang("Firewall region rules restored successfully ✓"), "restore")
                         else:
                             self.print_log(public.lang("Failed to restore firewall region rules"), "restore")
@@ -169,10 +221,12 @@ class FirewallModule(BaseUtil, ConfigManager):
                 firewall_com().set_status(public.to_dict_obj({'status': 1}))
                 self.print_log(public.lang("Firewall restart completed"), "restore")
                 resotre_data['data_list']['firewall']['status'] = 2
+                resotre_data['data_list']['firewall']['restore_status'] = 2
                 self.update_restore_data_list(timestamp, resotre_data)
             except Exception as e:
                 self.print_log(public.lang("Failed to restore firewall data: {}").format(str(e)), "restore")
                 resotre_data['data_list']['firewall']['status'] = 3
+                resotre_data['data_list']['firewall']['restore_status'] = 3
                 resotre_data['data_list']['firewall']['err_msg'] = str(e)
                 self.update_restore_data_list(timestamp, resotre_data)
 

@@ -225,6 +225,7 @@
 			"index_7": "Accendi il servizio SSH",
 			"index_8": "Sei sicuro di attivare il servizio SSH?",
 			"index_9": "Disattiva il servizio SSH disconnetterà anche tutti gli utenti accettati, continuare?",
+			"index_10": "Gestione degli account di sistema SSH",
 			"Basic": {
 				"index_1": "Accesso della password SSH",
 				"index_2": "Accesso alla chiave SSH",
@@ -268,6 +269,42 @@
 					"whitelist_1": "Inserisci IP",
 					"whitelist_2": "IP"
 				}
+			},
+			"Account": {
+				"create": "Crea utente di sistema",
+				"conversion_title": "Gestione degli account di sistema SSH",
+				"overview": "Panoramica",
+				"feature_modify_password": "Modifica le password degli utenti di sistema",
+				"feature_delete_user": "Elimina utenti di sistema",
+				"feature_anti_intrusion": "Anti-intrusione",
+				"username": "Nome utente",
+				"protection": "Protezione dall'escalation dei privilegi",
+				"log": "Registrazione dei comandi",
+				"remark": "Note",
+				"command_log": "Log dei comandi",
+				"reset_password": "Reimposta password",
+				"create_title": "Crea utente di sistema",
+				"reset_title": "Reimposta password: {0}",
+				"password": "Password",
+				"new_password": "Nuova password",
+				"username_placeholder": "Inserisci il nome utente",
+				"password_placeholder": "Inserisci la password",
+				"username_invalid": "Il nome utente deve contenere da 2 a 20 caratteri e può includere solo lettere e numeri. I caratteri speciali non sono consentiti.",
+				"password_min": "La password deve contenere almeno 8 caratteri",
+				"delete_title": "Elimina utente: {0}",
+				"delete_content": "Dopo l'eliminazione, questo utente di sistema non potrà più accedere al server. L'azione non può essere annullata.",
+				"confirm_delete": "Conferma eliminazione",
+				"tip_1": "Quando la protezione dall'escalation dei privilegi è attiva, i comandi ad alto rischio vengono limitati e registrati.",
+				"tip_2": "Quando la protezione è disattivata, i comandi eseguiti dall'utente vengono soltanto registrati e tracciati.",
+				"tip_3": "La protezione si concentra attualmente sui rischi di escalation causati da utenti come www, redis e mysql.",
+				"plugin_missing": "Installa il plugin anti-intrusione prima di gestire gli account di sistema SSH",
+				"install_plugin": "Installa plugin",
+				"professional_only": "Funzione dell'edizione Professionale",
+				"professional_desc": "La gestione degli account di sistema SSH comprende la creazione, l'eliminazione e la gestione degli account utente SSH sul server. Questi account consentono l'accesso remoto sicuro tramite SSH e sono normalmente amministrati per garantire l'accesso ai soli utenti autorizzati.",
+				"upgrade": "Aggiorna ora",
+				"no_logs": "Al momento non sono disponibili log dei comandi",
+				"api_create": "Creazione dell'utente di sistema, attendere...",
+				"api_delete": "Eliminazione dell'utente di sistema, attendere..."
 			},
 			"Logs": {
 				"index_1": "Tutto",
@@ -636,6 +673,156 @@
 						"desc": "Discover anomalies and security risks through log analysis"
 					}
 				}
+			}
+		},
+		"Overview": {
+			"header": {
+				"title": "Security Overview",
+				"subtitle": "Monitor your server security posture and respond to threats before they impact your services.",
+				"systemRunning": "System running"
+			},
+			"sections": {
+				"securityScan": "Security Scan",
+				"recommendedActions": "Recommended Actions",
+				"recentSecurityEvents": "Recent Security Events",
+				"scanOverview": "Scan Overview",
+				"last7Days": "Last 7 days",
+				"scanning": "Scanning..."
+			},
+			"Api": {
+				"settingStatus": "Applying settings, please wait..."
+			},
+			"common": {
+				"noData": "No data yet"
+			},
+			"protection": {
+				"title": "Protection Status",
+				"enabledCount": "Enabled {enabled}/{total}",
+				"confirm": {
+					"enableTitle": "Attiva {name}",
+					"enableContent": "Vuoi davvero attivare {name}?",
+					"disableTitle": "Disattiva {name}",
+					"disableContent": "Vuoi davvero disattivare {name}?"
+				},
+				"names": {
+					"firewall": "Firewall",
+					"tamperCore": "Tamper-proof for Enterprise",
+					"ssh": "SSH Protection",
+					"btwaf": "Nginx WAF",
+					"fail2ban": "Fail2Ban"
+				},
+				"status": {
+					"enabled": "Enabled",
+					"disabled": "Disabled",
+					"notInstalled": "Not installed"
+				},
+				"details": {
+					"allowedPorts": "Allowed ports: ",
+					"portSeparator": ", ",
+					"monitoringPrefix": "Monitoring ",
+					"monitoringSuffix": " core files for changes",
+					"currentPort": "Current port: ",
+					"keyLogin": "Key login: ",
+					"passwordLogin": "Password login: ",
+					"blocks": "Blocks:",
+					"todayRequest": "Richieste di oggi: ",
+					"todayMaliciousRequest": "Richieste dannose di oggi: ",
+					"blockedPrefix": "Blocked ",
+					"bruteForceMiddle": " brute-force attempts · ",
+					"bannedIpSuffix": " IPs banned"
+				},
+				"settings": {
+					"quickAllowPorts": "Quick allow ports",
+					"configureProduct": "Configure {name}",
+					"sshSettings": "SSH settings"
+				},
+				"forms": {
+					"portNumber": "Numero porta"
+				},
+				"ssh": {
+					"keyLoginDesc": "Consenti accesso SSH con chiave",
+					"passwordLoginDesc": "Consenti accesso SSH con password",
+					"keysTitle": "Chiavi SSH"
+				},
+				"attacks": {
+					"cc": "CC attacks",
+					"xss": "XSS",
+					"sql": "SQL injection"
+				}
+			},
+			"scanCards": {
+				"labels": {
+					"securityRisk": "Security Risk",
+					"malwareDetection": "Malware Detection",
+					"websiteVulnerability": "Website Vulnerability",
+					"baseline": "Baseline"
+				},
+				"waitingFirstScan": "Waiting for first scan",
+				"details": "Details →",
+				"detailsAria": "{label} details"
+			},
+			"riskLevels": {
+				"critical": "Critical",
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low",
+				"normal": "Normal"
+			},
+			"recommended": {
+				"emptyTitle": "No recommended actions",
+				"emptyDesc": "Recommended actions will be generated automatically after a security scan.",
+				"noDescription": "No recommendation details",
+				"defaultTitle": "Recommended Action",
+				"badgeItems": "{count} items",
+				"badgeZeroItems": "0 items",
+				"buttons": {
+					"fixNow": "Fix Now",
+					"resolve": "Resolve",
+					"review": "Review",
+					"view": "View"
+				}
+			},
+			"events": {
+				"title": "Recent Security Events",
+				"defaultTitle": "Security event",
+				"noEventDetails": "No event details",
+				"emptyTitle": "No security events",
+				"emptyDesc": "Your server is running normally. Security events will appear here after a scan.",
+				"allLoaded": "All security events loaded",
+				"viewAll": "View All →",
+				"autoRecord": "Events will be recorded after the first scan",
+				"filters": {
+					"all": "All categories",
+					"info": "Info",
+					"low": "Low",
+					"medium": "Medium",
+					"high": "High",
+					"critical": "Critical",
+					"searchPlaceholder": "Search security events"
+				},
+				"status": {
+					"normal": "Normal",
+					"warning": "Warning",
+					"blocked": "Blocked"
+				}
+			},
+			"health": {
+				"status": {
+					"scanning": "Scanning",
+					"pending": "Not scanned"
+				},
+				"levels": {
+					"healthy": "Healthy",
+					"good": "Good",
+					"attention": "Needs Attention",
+					"critical": "Critical"
+				},
+				"scanningDesc": "Running a full server security scan",
+				"pleaseWait": "Please wait",
+				"lastScan": "Last scan: {time}",
+				"notScanned": "No security scan has been run yet.",
+				"clickToStart": "Click Start Scan to begin.",
+				"startScan": "Start Scan"
 			}
 		},
 		"NetworkScan": {

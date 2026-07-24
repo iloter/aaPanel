@@ -101,6 +101,7 @@
     "systemRestartReminder": "Lembrete de Reinicialização do Sistema",
     "serverRestartedAt": "Seu servidor reiniciou às {time}.",
     "iKnow": "Eu Sei",
+    "memoEmpty": "O conteúdo atual está vazio, clique para editar",
     "Install": {
       "index_1_1": "Recomendado usar os seguintes pacotes de um clique, escolha sob demanda ou na {soft_} escolha você mesmo, recomendado instalar LEMP.",
       "index_1_2": "Loja de Software",
@@ -220,7 +221,7 @@
       "index_22": "Lidando com arquivos maliciosos",
       "index_23": "Varredura OSS",
       "index_24": "Habilitar varredura de diretórios de montagem OSS",
-      "index_25": "Interruptor de interceptação automática",
+      "index_25": "Isolar arquivos",
       "index_26": "Interruptor de Eliminação Dinâmica",
       "index_27": "O sistema atual não monta o diretório OSS, portanto a varredura OSS não pode ser habilitada",
       "index_28": "Habilitar eliminação dinâmica",
@@ -323,7 +324,7 @@
         "description": "Vamos configurar seu primeiro projeto em minutos.",
         "softwarePage": "Página de software",
         "lastConfig": "Última configuração: ",
-        "skipWizard": "Pular assistente",
+        "skipWizard": "Pular",
         "options": {
           "wordpress": {
             "title": "Criar site WordPress",

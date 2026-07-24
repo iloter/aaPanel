@@ -71,6 +71,10 @@ DISPLAY = {
         "icon": "i-carbon:reminder",
         "desc": public.lang("Real-time monitoring and alarm tasks")
     },
+    "memo": {
+        "icon": "i-carbon:notebook",
+        "desc": public.lang("Memo information")
+    },
 }
 
 
@@ -144,6 +148,16 @@ class OverViewBase:
 
         else:
             value_list = []
+        return value_list
+
+    # 备忘录
+    def _memo(self, name: str, params_list: list) -> list:
+        value_list = []
+        memo_path = "/www/server/panel/data/memo.txt"
+        if not os.path.exists(memo_path):
+            public.writeFile(memo_path, "")
+        content = public.readFile(memo_path)
+        value_list.append(content)
         return value_list
 
     def _corn(self, name: str, params_list: list) -> list:

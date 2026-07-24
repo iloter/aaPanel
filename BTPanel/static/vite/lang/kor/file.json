@@ -259,8 +259,8 @@
             "afterTurningOnProtectionFile": "보호를 켜면이 파일은 모든 작업을 거부합니다.",
             "turningOnProtectionFile": "현재 파일의 보호 활성화 [{path}]",
             "turningOffProtectionFile": "현재 파일의 보호를 닫습니다 [{path}]",
-            "turningOnProtectionSuffix": "접미사 보호를 활성화 [{접미사}]",
-            "turningOffProtectionSuffix": "접미사 보호를 닫습니다 [{접미사}]"
+            "turningOnProtectionSuffix": "접미사 보호를 활성화 [{suffix}]",
+            "turningOffProtectionSuffix": "접미사 보호를 닫습니다 [{suffix}]"
         },
         "deleteController": {
             "deleteSingleFileTitle": "파일 삭제 [{name}]",
@@ -441,7 +441,7 @@
             "title": "좋아하는 목록",
             "path": "경로",
             "removeFavoriteTitle": "좋아하는 것을 제거하세요",
-            "removeFavoriteMessage": "삭제 경로 확인 [{path}]?",
+            "removeFavoriteMessage": "삭제 경로 확인 [{name}]?",
             "management": "관리",
             "cancelFavoriteTitle": "즐겨찾기 취소",
             "cancelFavoriteMessage": "[{name}]의 즐겨찾기를 취소하시겠습니까?"

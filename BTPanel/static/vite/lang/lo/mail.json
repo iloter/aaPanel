@@ -522,6 +522,12 @@
 				"open": "ເປີດ",
 				"configurationParameters": "ຕົວກໍານົດການກໍານົດ",
 				"active": "ເຄື່ອນໄຫວ",
+				"conflictTitle": "ການຂັດກັນຂອງສະພາບແວດລ້ອມຕິດຕັ້ງ",
+				"conflictAlertTitle": "ກວດພົບການຂັດກັນຂອງພອດ",
+				"conflictAlertDescription": "ພອດຕໍ່ໄປນີ້ຖືກໃຊ້ໂດຍແອັບອື່ນ. ແກ້ໄຂການຂັດກັນແລ້ວລອງອີກຄັ້ງ.",
+				"checkInstallFailed": "ການກວດສອບສະພາບແວດລ້ອມຕິດຕັ້ງລົ້ມເຫຼວ. ກວດສອບເຊີບເວີແລ້ວລອງອີກຄັ້ງ.",
+				"conflictOccupied": "ຖືກໃຊ້ງານ",
+				"conflictProcess": "ໂປຣເຊສ",
 				"successTip": "ເປີດ BillionMail console ຫຼັງຈາກການຕິດຕັ້ງແລະສໍາເລັດການຕັ້ງຄ່າໂດເມນ, DNS, ແລະການກວດສອບຜູ້ສົ່ງ."
 			}
 		}

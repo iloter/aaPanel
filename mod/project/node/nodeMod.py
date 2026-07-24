@@ -42,7 +42,7 @@ class main():
         n, err = Node.from_dict(get)
         if not n:
             return public.return_message(-1, 0, err)
-        public.set_module_logs("nodes_node_adds_9", "add_node")
+
         if n.app_key or n.api_key:
             err = ServerNode.check_api_key(n)
             if err:
@@ -58,6 +58,10 @@ class main():
         node = ServerNodeDB().get_node_by_id(n.id)
         if node:
             monitor_node_once_with_timeout(node)
+        # 埋点
+        public.set_module_logs('node', 'add_node')
+        public.WriteLog("node", f"Add Node: {remarks} ")
+
         return public.return_message(0, 0, "Node added successfully")
 
     @staticmethod

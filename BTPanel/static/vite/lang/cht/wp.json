@@ -182,7 +182,7 @@
 			"index_43": "請在開啟維護模式前關閉並清除緩存。",
 			"index_44": "注意：為避免網站被索引引擎降級，請不要長時間啟用維護模式。",
 			"index_45": "建議上傳HTML文件作為模板，並使用數據URL作為模板的靜態文件。",
-			"index_46": "如果您希望您的模板使用aaPanel的模板配置功能，您可以啟動維護模式一次並修改/wp-content/mintensionce/mintensione-template.html文件，保留'{{}}'佔位符。"
+			"index_46": "如果您希望您的模板使用aaPanel的模板配置功能，您可以啟動維護模式一次並修改/wp-content/mintensionce/mintensione-template.html文件，保留{'{'}{'{'}{'}'}{'}'}佔位符。"
 		},
 		"Label": {
 			"index_1": "重置密碼",

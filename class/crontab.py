@@ -61,6 +61,112 @@ class crontab:
             data.append(tmp)
         return data
 
+    @staticmethod
+    def _safe_int(value, default=0):
+        try:
+            return int(value)
+        except:
+            return default
+
+    def _read_full_backup_task_list(self):
+        task_json = "/www/backup/backup_restore/backup_task.json"
+        if not os.path.exists(task_json):
+            return []
+        body = public.ReadFile(task_json)
+        if not body:
+            return []
+        try:
+            data = json.loads(body)
+            return data if isinstance(data, list) else []
+        except:
+            public.print_log("[full_backup] get_backup_list read backup_task.json failed")
+            return []
+
+    def _format_full_backup_time(self, item):
+        for key in ("done_time", "backup_time", "create_time"):
+            value = item.get(key)
+            if value not in (None, ""):
+                return value
+        timestamp = self._safe_int(item.get("timestamp"), 0)
+        if timestamp > 0:
+            try:
+                return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+            except:
+                pass
+        return ""
+
+    def _full_backup_filename(self, item):
+        backup_file = str(item.get("backup_file") or "")
+        storage_type = str(item.get("cloud_storage") or item.get("storage_type") or "local")
+        cloud_path = str(item.get("cloud_upload_path") or "")
+
+        if backup_file:
+            if storage_type in ("", "off", "localhost", "local") or os.path.exists(backup_file):
+                return backup_file
+            if cloud_path:
+                return "{}|{}|{}".format(backup_file, storage_type, cloud_path.lstrip("/"))
+            return backup_file
+
+        if cloud_path and storage_type not in ("", "off", "localhost", "local"):
+            return "|{}|{}".format(storage_type, cloud_path.lstrip("/"))
+        return ""
+
+    def get_full_backup_data(self, cron_id, p, rows, callback):
+        cron_id = str(cron_id)
+        p = self._safe_int(p, 1)
+        rows = self._safe_int(rows, 10)
+        p = p if p > 0 else 1
+        rows = rows if rows > 0 else 10
+
+        backup_records = []
+        for item in self._read_full_backup_task_list():
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("cron_id", "")) != cron_id:
+                continue
+            if item.get("backup_mode") not in ("", None, "full_backup"):
+                continue
+
+            backup_file = str(item.get("backup_file") or "")
+            cloud_path = str(item.get("cloud_upload_path") or "")
+            storage_type = str(item.get("cloud_storage") or item.get("storage_type") or "local")
+            size = self._safe_int(item.get("backup_file_size"), 0)
+            if backup_file and os.path.exists(backup_file):
+                try:
+                    size = os.path.getsize(backup_file)
+                except:
+                    pass
+
+            backup_records.append({
+                "id": self._safe_int(item.get("timestamp"), 0),
+                "type": 0,
+                "name": os.path.basename(backup_file) or os.path.basename(cloud_path) or str(item.get("backup_name") or "Full Backup"),
+                "pid": 0,
+                "filename": self._full_backup_filename(item),
+                "size": size,
+                "addtime": self._format_full_backup_time(item),
+                "ps": "Plan task backup to {}".format("localhost" if storage_type in ("", "off", "localhost", "local") else storage_type),
+                "cron_id": self._safe_int(cron_id, 0),
+                "backup_type": 0,
+                "timestamp": self._safe_int(item.get("timestamp"), 0),
+                "backup_status": self._safe_int(item.get("backup_status"), 0),
+                "backup_count": item.get("backup_count") or {},
+                "storage_type": storage_type,
+                "cloud_upload_status": self._safe_int(item.get("cloud_upload_status"), 0),
+                "cloud_upload_path": cloud_path,
+                "cloud_name": str(item.get("cloud_name") or storage_type),
+                "local": backup_file,
+                "localexist": 0 if backup_file and os.path.isfile(backup_file) else 1,
+                "bak_method": "local" if storage_type in ("", "off", "localhost", "local") else storage_type,
+            })
+
+        backup_records.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+        data = public.get_page(len(backup_records), p, rows, callback)
+        start = (p - 1) * rows
+        data["data"] = backup_records[start:start + rows]
+        # public.print_log("[full_backup] get_backup_list: cron_id={}, total={}, page={}, rows={}".format(cron_id, len(backup_records), p, rows))
+        return data
+
     def get_backup_list(self, args):
         '''
             @name 获取指定备份任务的备份文件列表
@@ -83,6 +189,9 @@ class crontab:
         callback = args.get('callback/s', '') if tojs else tojs
 
         cron_id = args.get('cron_id/d')
+        crontab = public.M('crontab').where('id=?', (cron_id,)).field('sType').find()
+        if crontab and crontab.get('sType') == 'full_backup':
+            return self.get_full_backup_data(cron_id, p, rows, callback)
         count = public.M('backup').where('cron_id=?', (cron_id,)).count()
         data = public.get_page(count, p, rows, callback)
         data['data'] = public.M('backup').where('cron_id=?', (cron_id,)).limit(data['row'], data['shift']).select()
@@ -464,6 +573,7 @@ class crontab:
                     'path': head + python_bin +" " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save'])+attach_param,
                     'site'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save'])+attach_param,
                     'database': head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save'])+attach_param,
+                    'full_backup': head + python_bin + " " + public.GetConfigValue('setup_path') + "/panel/mod/project/backup_restore/cron_full_backup.py " + cronName,
                     'logs'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+log+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
                     'webshell': head +python_bin+ " " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
@@ -475,6 +585,7 @@ class crontab:
                     'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save'])+attach_param,
                     'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save'])+attach_param,
                     'database': head + python_bin+" " + cfile + " database " + param['sName'] + " " + str(param['save'])+attach_param,
+                    'full_backup': head + python_bin + " " + public.GetConfigValue('setup_path') + "/panel/mod/project/backup_restore/cron_full_backup.py " + cronName,
                     'logs'  :   head + python_bin+" " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+log+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
                      'webshell': head + python_bin+" " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
@@ -564,6 +675,3 @@ echo "--------------------------------------------------------------------------
         if not os.path.exists(cron_path):
             public.writeFile(cron_path,"")
         return cron_path
-
-    
-        

@@ -217,7 +217,7 @@
       "index_22": "Trattare con file dannosi",
       "index_23": "Scansione OSS",
       "index_24": "Abilita la scansione delle directory di montaggio OSS",
-      "index_25": "Switch di intercettazione automatica",
+      "index_25": "Isola file",
       "index_26": "Switch di uccisione dinamico",
       "index_27": "L'attuale sistema non monta la directory OSS, quindi la scansione OSS non può essere abilitata",
       "index_28": "Abilita chiusura dinamica",
@@ -298,6 +298,7 @@
     "systemRestartReminder": "System Restart Reminder",
     "serverRestartedAt": "Your server restarted at {time}.",
     "iKnow": "I Know",
+    "memoEmpty": "Il contenuto attuale è vuoto, fai clic per modificare",
     "SiteGuide": {
       "common": {
         "back": "Indietro",
@@ -323,7 +324,7 @@
         "description": "Configuriamo il tuo primo progetto in pochi minuti.",
         "softwarePage": "Pagina software",
         "lastConfig": "Last config: ",
-        "skipWizard": "Salta procedura guidata",
+        "skipWizard": "Salta",
         "options": {
           "wordpress": {
             "title": "Crea sito WordPress",

@@ -26,7 +26,7 @@ class main:
         e_db = TaskFlowsDB()
         err = Script.check(get)
         if err:
-            return public.return_message(-1, 0,=err)
+            return public.return_message(-1, 0, err)
         s = Script.from_dict(get)
         # 查重
         if e_db.Script.find("name = ?", (s.name,)):

@@ -430,7 +430,7 @@
 			"title": "Избранное",
 			"path": "Путь",
 			"removeFavoriteTitle": "Удалить из избранного",
-			"removeFavoriteMessage": "Удалить путь [{path}] из избранного?",
+			"removeFavoriteMessage": "Удалить путь [{name}] из избранного?",
 			"management": "Управление",
 			"cancelFavoriteTitle": "Отменить избранное",
 			"cancelFavoriteMessage": "Отменить избранное для [{name}], продолжить?"

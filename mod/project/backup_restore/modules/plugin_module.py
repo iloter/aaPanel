@@ -47,6 +47,52 @@ class PluginModule(BaseUtil, ConfigManager):
         self.plugin_path = '/www/server/panel/plugin'
         self._safe_flag = False
 
+    @staticmethod
+    def _short_text(value, max_length=1200):
+        try:
+            value = json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else str(value)
+        except Exception:
+            value = repr(value)
+        value = value.replace("\r\n", "\n").strip()
+        if len(value) > max_length:
+            value = value[-max_length:]
+        return value
+
+    def _get_installed_plugin_info(self, plugin_name):
+        info_file = os.path.join(self.plugin_path, plugin_name, "info.json")
+        result = {
+            "installed": False,
+            "info_file": info_file,
+            "version": "",
+            "checks": os.path.join(self.plugin_path, plugin_name),
+            "error": ""
+        }
+        try:
+            if not os.path.exists(info_file):
+                return result
+            plugin_info = json.loads(public.ReadFile(info_file) or "{}")
+            result["version"] = str(plugin_info.get("versions", plugin_info.get("version", "")))
+            result["checks"] = plugin_info.get("checks") or result["checks"]
+            checks = [item.strip() for item in str(result["checks"]).split(",") if item.strip()]
+            if checks:
+                result["installed"] = any(os.path.exists(path) for path in checks)
+            else:
+                result["installed"] = os.path.exists(os.path.dirname(info_file))
+        except Exception as e:
+            result["error"] = str(e)
+        return result
+
+    def _install_or_skip_plugin(self, plugin_name, plugin_version):
+        installed_info = self._get_installed_plugin_info(plugin_name)
+        if installed_info["installed"] and installed_info["version"] == str(plugin_version):
+            return {
+                "status": True,
+                "msg": public.lang("Plugin already installed")
+            }
+
+        self.before_install_plugin(plugin_name)
+        return self.install_plugin(plugin_name, plugin_version)
+
     def backup_plugin_data(self, timestamp):
         self.print_log("====================================================", "backup")
         self.print_log(public.lang("Start backing up plugin data"), "backup")
@@ -261,9 +307,7 @@ class PluginModule(BaseUtil, ConfigManager):
             restore_data['data_list']['plugin']['btwaf']['restore_status'] = 1
             self.update_restore_data_list(timestamp, restore_data)
             plugin_version = plugin_info['btwaf']['version']
-            # 检查btwaf目录下是否有正在运行的进程
-            self.before_install_plugin('btwaf')
-            install_result = self.install_plugin('btwaf', plugin_version)
+            install_result = self._install_or_skip_plugin('btwaf', plugin_version)
             if install_result['status'] is True:
                 new_log_str = public.lang("Nginx firewall ✓")
                 self.replace_log(log_str, new_log_str, "restore")
@@ -288,8 +332,7 @@ class PluginModule(BaseUtil, ConfigManager):
             restore_data['data_list']['plugin']['monitor']['restore_status'] = 1
             self.update_restore_data_list(timestamp, restore_data)
             plugin_version = plugin_info['monitor']['version']
-            self.before_install_plugin('monitor')
-            install_result = self.install_plugin('monitor', plugin_version)
+            install_result = self._install_or_skip_plugin('monitor', plugin_version)
             if install_result['status'] is True:
                 new_log_str = public.lang("Website monitoring report ✓")
                 self.replace_log(log_str, new_log_str, "restore")
@@ -313,8 +356,7 @@ class PluginModule(BaseUtil, ConfigManager):
             restore_data['data_list']['plugin']['tamper_core']['restore_status'] = 1
             self.update_restore_data_list(timestamp, restore_data)
             plugin_version = plugin_info['tamper_core']['version']
-            self.before_install_plugin('tamper_core')
-            install_result = self.install_plugin('tamper_core', plugin_version)
+            install_result = self._install_or_skip_plugin('tamper_core', plugin_version)
             if install_result['status'] is True:
                 public.ExecShell("/etc/init.d/bt-tamper stop")
                 new_log_str = public.lang("Enterprise tamper protection ✓")
@@ -340,8 +382,7 @@ class PluginModule(BaseUtil, ConfigManager):
             restore_data['data_list']['plugin']['syssafe']['restore_status'] = 1
             self.update_restore_data_list(timestamp, restore_data)
             plugin_version = plugin_info['syssafe']['version']
-            self.before_install_plugin('syssafe')
-            install_result = self.install_plugin('syssafe', plugin_version)
+            install_result = self._install_or_skip_plugin('syssafe', plugin_version)
             if install_result['status'] is True:
                 public.ExecShell("/etc/init.d/bt_syssafe stop")
                 new_log_str = public.lang("System hardening ✓")
@@ -478,15 +519,21 @@ class PluginModule(BaseUtil, ConfigManager):
         try:
             if plugin_name == "btwaf":
                 cmd = "ps aux | grep 'BT-WAF' | grep -v grep | awk '{print $2}'"
-                cmd_output = subprocess.check_output(cmd, shell=True, text=True)
-                pids1 = cmd_output.strip()
-                if pids1:
-                    subprocess.run(["kill", "-9", str(pids1)], check=True)
+                cmd_result = subprocess.run(cmd, shell=True, text=True, capture_output=True, timeout=10)
+                pids1 = cmd_result.stdout.strip().split()
+                for pid in pids1:
+                    subprocess.run(["kill", "-9", str(pid)], text=True, capture_output=True, timeout=10)
                 xss_path = "/www/server/panel/plugin/btwaf/nginx_btwaf_xss"
-                lsof_output = subprocess.check_output(f"lsof -t {xss_path}", shell=True, text=True)
-                pids2 = lsof_output.strip().split()
+                lsof_result = subprocess.run(
+                    "lsof -t {}".format(xss_path),
+                    shell=True,
+                    text=True,
+                    capture_output=True,
+                    timeout=10
+                )
+                pids2 = lsof_result.stdout.strip().split()
                 for p2 in pids2:
-                    subprocess.run(["kill", "-9", str(p2)], check=True)
+                    subprocess.run(["kill", "-9", str(p2)], text=True, capture_output=True, timeout=10)
                 time.sleep(1)
             elif plugin_name == "syssafe":
                 public.ExecShell("/etc/init.d/bt_syssafe stop")
@@ -496,7 +543,7 @@ class PluginModule(BaseUtil, ConfigManager):
             elif plugin_name == "tamper_core":
                 pass
             time.sleep(1)
-        except:
+        except Exception:
             pass
 
     def install_plugin(self, sName, plugin_version):
@@ -510,7 +557,26 @@ class PluginModule(BaseUtil, ConfigManager):
                 get.sName = sName
                 get.version = sVersion
                 get.min_version = sMin_version
-                info = plugin.install_plugin(get)["message"]
+                install_response = plugin.install_plugin(get)
+
+                if not isinstance(install_response, dict):
+                    return {
+                        'status': False,
+                        'msg': public.lang('Installation failed: {}').format(self._short_text(install_response))
+                    }
+                if install_response.get("status") not in [0, True]:
+                    return {
+                        'status': False,
+                        'msg': self._short_text(install_response.get("message", install_response.get("msg", "")))
+                    }
+
+                info = install_response.get("message")
+                if not isinstance(info, dict):
+                    return {
+                        'status': False,
+                        'msg': public.lang('Installation failed: {}').format(self._short_text(info))
+                    }
+
                 args = public.dict_obj()
                 args.tmp_path = info.get("tmp_path")
                 args.plugin_name = sName

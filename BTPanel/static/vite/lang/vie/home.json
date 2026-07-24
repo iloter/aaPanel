@@ -101,6 +101,7 @@
     "systemRestartReminder": "Lời nhắc khởi động lại hệ thống",
     "serverRestartedAt": "Máy chủ của bạn đã khởi động lại lúc {time}.",
     "iKnow": "Tôi biết",
+    "memoEmpty": "Nội dung hiện tại đang trống, nhấp để chỉnh sửa",
     "Install": {
       "index_1_1": "Được khuyến nghị sử dụng các gói một nhấp chuột sau, vui lòng chọn theo yêu cầu hoặc trong {soft_} chọn một mình, được khuyến nghị cài đặt LEMP.",
       "index_1_2": "Cửa hàng phần mềm",
@@ -141,7 +142,7 @@
       "index_19": "Cập nhật ngay bây giờ",
       "index_20": "Hướng dẫn cho người kiểm tra beta",
       "index_21": "Nhật ký cập nhật beta linux",
-      "index_23_1": "Tôi đã kiểm tra {title} {chờ}",
+      "index_23_1": "Tôi đã kiểm tra {title} {wait}",
       "index_23_2": "\"Hướng dẫn cho người thử nghiệm beta\"",
       "index_23_3": "{0} thứ hai (s) Chờ nhấp vào",
       "index_24": "Cập nhật phiên bản Beta Linux",
@@ -220,7 +221,7 @@
       "index_22": "Xử lý các tệp độc hại",
       "index_23": "Quét OSS",
       "index_24": "Cho phép quét các thư mục Mount OSS",
-      "index_25": "Công tắc đánh chặn tự động",
+      "index_25": "Cách ly tệp",
       "index_26": "Công tắc tiêu diệt động",
       "index_27": "Hệ thống hiện tại không gắn thư mục OSS, vì vậy việc quét OSS không thể được bật",
       "index_28": "Cho phép giết người năng động",
@@ -323,7 +324,7 @@
         "description": "Hãy thiết lập dự án đầu tiên của bạn chỉ trong vài phút.",
         "softwarePage": "Trang phần mềm",
         "lastConfig": "Cấu hình cuối: ",
-        "skipWizard": "Bỏ qua trình hướng dẫn",
+        "skipWizard": "Bỏ qua",
         "options": {
           "wordpress": {
             "title": "Tạo trang WordPress",

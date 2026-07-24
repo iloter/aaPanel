@@ -313,7 +313,7 @@
 			"index_45": "Marca certificada",
 			"index_46": "Dominio del certificado (s)",
 			"index_47": "Venció",
-			"index_48": "{fecha}, exp en {días} días",
+			"index_48": "{date}, exp en {days} días",
 			"index_49": "Forzar https",
 			"index_50": "Clave privada (clave)",
 			"index_51": "Certificado (CRT/PEM)",

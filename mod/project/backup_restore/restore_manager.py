@@ -31,6 +31,10 @@ from mod.project.backup_restore.modules.firewall_module import FirewallModule
 from mod.project.backup_restore.modules.mail_module import MailModule
 from mod.project.backup_restore.modules.ssl_model import SSLModel
 from mod.project.backup_restore.modules.plugin_module import PluginModule
+try:
+    from mod.project.backup_restore.modules.node_module import NodeModule
+except:
+    NodeModule = None
 
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
@@ -53,6 +57,216 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
         self.migrate_backup_info_path = '/www/backup/backup_restore/migrate_backup_info.json'
         self.overwrite = overwrite  # 强制还原标志
 
+    def _get_restore_select_file(self, timestamp):
+        return "{}/{}_restore_select.json".format(self.base_path, timestamp)
+
+    def _load_restore_selection(self, timestamp, backup_conf):
+        restore_selection = {}
+        if isinstance(backup_conf, dict) and isinstance(backup_conf.get("restore_selection"), dict):
+            restore_selection.update(backup_conf.get("restore_selection"))
+
+        select_file = self._get_restore_select_file(timestamp)
+        if os.path.exists(select_file):
+            try:
+                file_selection = json.loads(public.ReadFile(select_file))
+                if isinstance(file_selection, dict):
+                    restore_selection.update(file_selection)
+            except Exception as e:
+                public.print_log("read restore selection error: {}".format(str(e)))
+
+        if "wp_site_id" not in restore_selection:
+            if "wp_id" in restore_selection:
+                restore_selection["wp_site_id"] = restore_selection.get("wp_id")
+            elif "wp_tools_id" in restore_selection:
+                restore_selection["wp_site_id"] = restore_selection.get("wp_tools_id")
+
+        return restore_selection if restore_selection else None
+
+    @staticmethod
+    def _selection_values(selector):
+        return set(str(item).lower() for item in selector)
+
+    def _item_selected(self, item, selector, keys):
+        if "ALL" in selector:
+            return True
+        if not selector:
+            return False
+
+        selected_values = self._selection_values(selector)
+        for key in keys:
+            value = item.get(key)
+            if value is None:
+                continue
+            if isinstance(value, (list, tuple, set)):
+                for sub_value in value:
+                    if str(sub_value).lower() in selected_values:
+                        return True
+            elif str(value).lower() in selected_values:
+                return True
+        return False
+
+    def _infer_restore_data(self, restore_selection):
+        inferred = []
+        mapping = [
+            ("site_id", "site"),
+            ("wp_site_id", "wp_tools"),
+            ("database_id", "database"),
+        ]
+        for key, data_type in mapping:
+            if key in restore_selection and data_type not in inferred:
+                inferred.append(data_type)
+        return inferred
+
+    def _selector_from_selection(self, restore_selection, key, default_all=True):
+        if key not in restore_selection:
+            return ["ALL"] if default_all else []
+        return self.normalize_backup_id_list(restore_selection.get(key), default_all=default_all)
+
+    def _filter_crontab_restore_file(self, crontab_info, selector):
+        crontab_json = crontab_info.get("crontab_json") if isinstance(crontab_info, dict) else None
+        if not crontab_json or not os.path.exists(crontab_json):
+            return 0
+
+        try:
+            crontab_data = json.loads(public.ReadFile(crontab_json))
+        except Exception as e:
+            public.print_log("read restore crontab json error: {}".format(str(e)))
+            return 0
+
+        if not isinstance(crontab_data, list):
+            return 0
+
+        if "ALL" not in selector:
+            crontab_data = [
+                item for item in crontab_data
+                if isinstance(item, dict) and self._item_selected(item, selector, ("id", "name", "sName", "echo"))
+            ]
+            public.WriteFile(crontab_json, json.dumps(crontab_data))
+
+        return len(crontab_data)
+
+    def _filter_restore_data_list(self, timestamp, restore_info, restore_selection):
+        if not restore_selection:
+            return self.normalize_backup_data(restore_info.get("backup_data"))
+
+        data_list = restore_info.get("data_list")
+        if not isinstance(data_list, dict):
+            data_list = {}
+            restore_info["data_list"] = data_list
+
+        if "backup_data" in restore_selection:
+            requested_data = self.normalize_backup_data(restore_selection.get("backup_data"))
+        else:
+            requested_data = self.normalize_backup_data(self._infer_restore_data(restore_selection))
+            if not requested_data:
+                requested_data = self.normalize_backup_data(restore_info.get("backup_data"))
+
+        selected_data = []
+
+        if self.backup_type_enabled(requested_data, "soft") and data_list.get("soft"):
+            selected_data.append("soft")
+        else:
+            data_list["soft"] = {}
+
+        site_items = data_list.get("site", [])
+        if not isinstance(site_items, list):
+            site_items = []
+        filtered_sites = []
+        has_site = False
+        has_wp = False
+        site_selector = self._selector_from_selection(restore_selection, "site_id")
+        wp_site_selector = self._selector_from_selection(restore_selection, "wp_site_id")
+        for site in site_items:
+            if not isinstance(site, dict):
+                continue
+            is_wp = site.get("project_type", "").lower() in ["wp", "wp2"]
+            if is_wp:
+                if self.backup_type_enabled(requested_data, "wp_tools") and self._item_selected(
+                        site, wp_site_selector, ("id", "name", "ps")
+                ):
+                    filtered_sites.append(site)
+                    has_wp = True
+            else:
+                if self.backup_type_enabled(requested_data, "site") and self._item_selected(
+                        site, site_selector, ("id", "name", "ps")
+                ):
+                    filtered_sites.append(site)
+                    has_site = True
+        data_list["site"] = filtered_sites
+        if has_site:
+            selected_data.append("site")
+        if has_wp:
+            selected_data.append("wp_tools")
+
+        database_items = data_list.get("database", [])
+        if not isinstance(database_items, list):
+            database_items = []
+        if self.backup_type_enabled(requested_data, "database"):
+            database_selector = self._selector_from_selection(restore_selection, "database_id")
+            data_list["database"] = [
+                item for item in database_items
+                if isinstance(item, dict) and self._item_selected(item, database_selector, ("id", "name", "ps", "type"))
+            ]
+            if data_list["database"]:
+                selected_data.append("database")
+        else:
+            data_list["database"] = []
+
+        ftp_items = data_list.get("ftp", [])
+        if not isinstance(ftp_items, list):
+            ftp_items = []
+        if self.backup_type_enabled(requested_data, "ftp"):
+            data_list["ftp"] = [item for item in ftp_items if isinstance(item, dict)]
+            if data_list["ftp"]:
+                selected_data.append("ftp")
+        else:
+            data_list["ftp"] = []
+
+        ssl_info = data_list.get("ssl", {})
+        if not isinstance(ssl_info, dict):
+            ssl_info = {"ssl_list": [], "provider_list": []}
+        if self.backup_type_enabled(requested_data, "ssl"):
+            ssl_list = ssl_info.get("ssl_list", [])
+            provider_list = ssl_info.get("provider_list", [])
+            if not isinstance(ssl_list, list):
+                ssl_list = []
+            if not isinstance(provider_list, list):
+                provider_list = []
+            ssl_info["ssl_list"] = [item for item in ssl_list if isinstance(item, dict)]
+            ssl_info["provider_list"] = [item for item in provider_list if isinstance(item, dict)]
+            if ssl_info["ssl_list"] or ssl_info["provider_list"]:
+                selected_data.append("ssl")
+        else:
+            ssl_info = {"ssl_list": [], "provider_list": []}
+        data_list["ssl"] = ssl_info
+
+        crontab_info = data_list.get("crontab", {})
+        if self.backup_type_enabled(requested_data, "crontab") and isinstance(crontab_info, dict):
+            if self._filter_crontab_restore_file(crontab_info, ["ALL"]) > 0:
+                selected_data.append("crontab")
+            else:
+                data_list["crontab"] = {}
+        else:
+            data_list["crontab"] = {}
+
+        plugin_info = data_list.get("plugin", {})
+        if self.backup_type_enabled(requested_data, "plugin") and isinstance(plugin_info, dict):
+            data_list["plugin"] = plugin_info
+            if plugin_info:
+                selected_data.append("plugin")
+        else:
+            data_list["plugin"] = {}
+
+        for simple_key in ("ssh", "firewall", "vmail", "node"):
+            if self.backup_type_enabled(requested_data, simple_key) and data_list.get(simple_key):
+                selected_data.append(simple_key)
+            else:
+                data_list[simple_key] = {} if simple_key != "node" else []
+
+        restore_info["restore_selection"] = restore_selection
+        restore_info["backup_data"] = selected_data
+        return selected_data
+
     def restore_data(self, timestamp):
         """
         还原数据
@@ -65,6 +279,7 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
 
         try:
             public.WriteFile(self.restore_pl_file, timestamp)
+            self.write_initial_task_state("restore", timestamp)
             backup_file = str(timestamp) + "_backup.tar.gz"
             file_names = os.listdir(self.base_path)
             for file in file_names:
@@ -101,38 +316,53 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
             restore_info = self.get_restore_data_list(timestamp)
             restore_info["force_restore"] = self.overwrite  # 覆盖标志
             restore_info['restore_status'] = 1  # 更新状态
+            restore_selection = self._load_restore_selection(timestamp, backup_conf)
+            if restore_selection:
+                backup_data_list = self._filter_restore_data_list(timestamp, restore_info, restore_selection)
+            else:
+                restore_backup_data = restore_info.get("backup_data")
+                if restore_backup_data is None:
+                    restore_backup_data = backup_conf.get("backup_data")
+                backup_data_list = self.normalize_backup_data(restore_backup_data)
+            restore_info['backup_data'] = backup_data_list
             self.update_restore_data_list(timestamp, restore_info)
+            self.clear_initial_task_state("restore")
 
             start_time = int(time.time())
             # ============================= START ==================================
             self.print_log(public.lang("Start restoring data"), "restore")
             # ============================= env ====================================
             try:
-                self.restore_env(timestamp)
+                if self.backup_type_enabled(backup_data_list, "soft"):
+                    self.restore_env(timestamp)
             except Exception as e:
                 public.print_log(f"restore env error: {str(e)}")
 
             # ============================= site ====================================
             try:
-                self.restore_site_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "site", "wp_tools"):
+                    self.restore_site_data(timestamp)
             except Exception as e:
                 public.print_log("restore site error: {}".format(str(e)))
             finally:
-                self.chmod_dir_file("/www/wwwroot", dir_mode=0o755, file_mode=0o644)
+                if self.backup_type_enabled(backup_data_list, "site", "wp_tools"):
+                    self.chmod_dir_file("/www/wwwroot", dir_mode=0o755, file_mode=0o644)
 
             # ============================= ftp =====================================
             try:
-                self.restore_ftp_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "ftp"):
+                    self.restore_ftp_data(timestamp)
             except Exception as e:
                 public.print_log("restore ftp error: {}".format(str(e)))
 
             # ============================= database =================================
             try:
-                self.restore_database_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "database"):
+                    self.restore_database_data(timestamp)
             except Exception as e:
                 public.print_log("restore database error: {}".format(str(e)))
             finally:
-                if not self.overwrite:
+                if not self.overwrite and self.backup_type_enabled(backup_data_list, "database"):
                     try:  # 补全关系
                         self.fix_wp_onekey(timestamp)
                     except Exception as e:
@@ -140,17 +370,20 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
 
             # ============================= ssl ======================================
             try:
-                self.restore_ssl_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "ssl"):
+                    self.restore_ssl_data(timestamp)
             except Exception as e:
                 public.print_log("restore ssl error: {}".format(str(e)))
 
             # ============================= cron task ================================
             try:
-                self.restore_crontab_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "crontab"):
+                    self.restore_crontab_data(timestamp)
             except Exception as e:
                 public.print_log("restore cron task error: {}".format(str(e)))
             finally:
-                self.reload_crontab()
+                if self.backup_type_enabled(backup_data_list, "crontab"):
+                    self.reload_crontab()
 
             # ============================== ssh ======================================
             # TDDO: 存在问题，下个版本修复
@@ -159,23 +392,38 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
             # except Exception as e:
             #     public.print_log("restore ssh error: {}".format(str(e)))
 
+            try:
+                if self.backup_type_enabled(backup_data_list, "ssh"):
+                    self.restore_ssh_data(timestamp)
+            except Exception as e:
+                public.print_log("restore ssh error: {}".format(str(e)))
+
             # ============================= firewall ==================================
             try:
-                self.restore_firewall_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "firewall"):
+                    self.restore_firewall_data(timestamp)
             except Exception as e:
                 public.print_log("restore firewall error: {}".format(str(e)))
 
             # ============================= mail ======================================
             try:
-                self.restore_vmail_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "vmail"):
+                    self.restore_vmail_data(timestamp)
             except Exception as e:
                 public.print_log("restore mail error: {}".format(str(e)))
 
             # ============================= plugin ====================================
             try:
-                self.restore_plugin_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "plugin"):
+                    self.restore_plugin_data(timestamp)
             except Exception as e:
                 public.print_log("restore plugin error: {}".format(str(e)))
+
+            try:
+                if NodeModule is not None and self.backup_type_enabled(backup_data_list, "node"):
+                    NodeModule().restore_node_data(timestamp)
+            except Exception as e:
+                public.print_log("restore node error: {}".format(str(e)))
 
             # ============================= END =======================================
 
@@ -223,6 +471,7 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
         except Exception as e:
             return public.returnMsg(False, public.lang("Data restoration failed: {}").format(str(e)))
         finally:
+            self.clear_initial_task_state("restore")
             if os.path.exists(self.restore_pl_file):
                 public.ExecShell("rm -f {}".format(self.restore_pl_file))
 
@@ -295,6 +544,10 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
                 'backup_file_info': success_data
             }
 
+        def create_initial_result(restore_timestamp=None):
+            restore_log_data = public.ReadFile(restore_log_file) if os.path.exists(restore_log_file) else ""
+            return self.build_initial_task_progress("restore", restore_timestamp, restore_log_data)
+
         # 检查备份是否已完成
         if os.path.exists(restore_success_file):
             success_time = int(os.path.getctime(restore_success_file))
@@ -319,9 +572,12 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
             if os.path.exists(restore_pl_file):
                 timestamp = public.ReadFile(restore_pl_file).strip()
                 if not timestamp:
-                    return public.ReturnMsg(False, public.lang(
-                        "Restore process is running, but unable to get restore timestamp"))
+                    return public.ReturnMsg(True, create_initial_result())
             else:
+                init_state = self.get_initial_task_state("restore")
+                if init_state:
+                    return public.ReturnMsg(True, create_initial_result(init_state.get("timestamp")))
+
                 # 等待2秒，可能是还原刚刚完成
                 time.sleep(2)
                 if os.path.exists(restore_success_file):
@@ -346,8 +602,7 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
             count = 0
             while 1:
                 if count >= 3:
-                    return public.ReturnMsg(False, public.lang("Restore configuration file does not exist: {}").format(
-                        restore_json_path))
+                    return public.ReturnMsg(True, create_initial_result(timestamp))
                 count += 1
                 if not os.path.exists(restore_json_path):
                     time.sleep(1)
@@ -416,9 +671,13 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
         # 检查各类型备份进度
         for restore_type in restore_types:
             items = conf_data.get("data_list", {}).get(restore_type['data_key'], [])
+            if isinstance(items, dict):
+                items = [items] if items else []
+            if not isinstance(items, list):
+                items = []
             for item in items:
                 try:
-                    if item.get("restore_status") == 2:
+                    if item.get("restore_status", item.get("status")) == 2:
                         continue
 
                     return public.ReturnMsg(True, {
@@ -426,7 +685,7 @@ class RestoreManager(SiteModule, DatabaseModule, FtpModule, SSLModel, CrontabMod
                         "task_status": 1,
                         "data_type": restore_type['type'],
                         "name": item.get("name", public.lang("Unknown {}").format(restore_type['display_name'])),
-                        "data_backup_status": item.get("status", 0),
+                        "data_backup_status": item.get("restore_status", item.get("status", 0)),
                         "progress": restore_type['progress'],
                         "msg": item.get("msg"),
                         'exec_log': restore_log_data,

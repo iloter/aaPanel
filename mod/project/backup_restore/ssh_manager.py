@@ -1547,6 +1547,7 @@ class BackupRestoreManager:
         self.backup_pl_file = self.base_path + '/backup.pl'
         self.migrate_backup_pl_file = self.base_path + '/migrate_backup.pl'
         self.migrate_backup_success_file = self.base_path + '/migrate_backup_success.pl'
+        self.migrage_save_data_conf = self.base_path + '/migrate_save_data_conf.json'
 
     def add_backup_task(self):
         backup_config = []
@@ -1582,6 +1583,18 @@ class BackupRestoreManager:
             'total_time': None,
             'done_time': None,
         }
+
+        if os.path.exists(self.migrage_save_data_conf):
+            from mod.project.backup_restore.config_manager import ConfigManager
+            config_manager = ConfigManager()
+            save_data_conf = json.loads(public.ReadFile(self.migrage_save_data_conf))
+            backup_conf['backup_data'] = config_manager.normalize_backup_data(save_data_conf.get("backup_data"))
+            backup_conf['database_id'] = config_manager.normalize_backup_id_list(save_data_conf.get("database_id"))
+            backup_conf['site_id'] = config_manager.normalize_backup_id_list(save_data_conf.get("site_id"))
+            wp_site_id_value = save_data_conf.get("wp_site_id")
+            if wp_site_id_value is None:
+                wp_site_id_value = save_data_conf.get("wp_id")
+            backup_conf['wp_site_id'] = config_manager.normalize_backup_id_list(wp_site_id_value)
 
         backup_config.append(backup_conf)
         public.WriteFile(self.bakcup_task_json, json.dumps(backup_config))

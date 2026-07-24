@@ -171,7 +171,7 @@
 			"index_43": "Bakım modunu etkinleştirmeden önce önbelleği kapatın ve temizleyin.",
 			"index_44": "Not: Arama motorları tarafından site sıralamasının düşürülmesini önlemek için bakım modunu uzun süre etkinleştirmeyin.",
 			"index_45": "Şablonlar için HTML dosyaları yüklemeniz ve statik şablon dosyaları için veri URL'leri kullanmanız önerilir.",
-			"index_46": "Şablonunuzun aaPanel şablon yapılandırma özelliğini kullanmasını istiyorsanız, bakım modunu bir kez çalıştırabilir ve '{{}}'yer tutucusunu koruyarak /wp-content/mintensionce/mintensione-template.html dosyasını değiştirebilirsiniz."
+			"index_46": "Şablonunuzun aaPanel şablon yapılandırma özelliğini kullanmasını istiyorsanız, bakım modunu bir kez çalıştırabilir ve {'{'}{'{'}{'}'}{'}'} yer tutucusunu koruyarak /wp-content/mintensionce/mintensione-template.html dosyasını değiştirebilirsiniz."
 		},
 		"Label": {
 			"index_1": "Şifreyi sıfırla",

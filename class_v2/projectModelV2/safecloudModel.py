@@ -1476,8 +1476,9 @@ class main(projectBase):
         try:
             # public.print_log("|-开始木马检测扫描-|")
             # 检测是否开启动态查杀开关
-            if not self.__config.config.get('dynamic_detection', True):
-                return public.returnMsg(True, 'The dynamic killing function has been turned off, skipping detection')
+            # todo  去掉开关 改为手动扫描
+            # if not self.__config.config.get('dynamic_detection', True):
+            #     return public.returnMsg(True, 'The dynamic killing function has been turned off, skipping detection')
             # task任务频率控制
             safecloud_dir = '/www/server/panel/data/safeCloud'
             if not os.path.exists(safecloud_dir):
@@ -1500,14 +1501,9 @@ class main(projectBase):
                     last_detection_time = last_detection_data.get('time', 0)
                     # 检查是否需要执行
                     if (current_time - last_detection_time) < 50:  # 5小时60*60*5
-                        return public.returnMsg(True,
-                                                'Less than 12 hours have passed since the last scan, skip this scan')
+                        return public.return_message(0, 0, 'Less than 12 hours have passed since the last scan, skip this scan')
                 except Exception as e:
-                    return {
-                        'status': False,
-                        'msg': "An error occurred during the scanning process: {}".format(str(e)),
-                        'detected': []
-                    }
+                    return public.return_message(-1, 0, "An error occurred during the scanning process: {}".format(str(e)))
 
             # 更新执行时间（提前写入，防止长时间执行导致多次触发）
             if is_task:
@@ -1519,11 +1515,8 @@ class main(projectBase):
                         finally:
                             fcntl.flock(f, fcntl.LOCK_UN)
                 except Exception as e:
-                    return {
-                        'status': False,
-                        'msg': "An error occurred during the scanning process: {}".format(str(e)),
-                        'detected': []
-                    }
+                    return public.return_message(-1, 0,
+                                                 "An error occurred during the scanning process: {}".format(str(e)))
 
             # 获取新增或修改的文件
             new_files = self.get_new_files()
@@ -1532,18 +1525,17 @@ class main(projectBase):
             detected_webshells = self.scan_suspicious_files(new_files)
 
             # 告警配置
-            return {
-                'status': True,
-                'msg': "Scanning completed, found {} suspicious files".format(len(detected_webshells)),
-                'detected': detected_webshells
-            }
+            # return {
+            #     'status': True,
+            #     'msg': "Scanning completed, found {} suspicious files".format(len(detected_webshells)),
+            #     'detected': detected_webshells
+            # }
+            return public.return_message(0, 0, "Scanning completed, found {} suspicious files".format(len(detected_webshells)))
+
         except Exception as e:
             # public.print_log("Error in webshell_file: {}".format(str(e)))
-            return {
-                'status': False,
-                'msg': "An error occurred during the scanning process: {}".format(str(e)),
-                'detected': []
-            }
+            return public.return_message(-1, 0,
+                                         "An error occurred during the scanning process: {}".format(str(e)))
 
     def load_last_scan(self) -> Dict:
         """加载上次扫描结果

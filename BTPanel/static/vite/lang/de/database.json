@@ -7,7 +7,7 @@
 		"index_5": "Alle synchronisieren",
 		"index_6": "Holen Sie sich DB vom Server",
 		"index_7": {
-			"index_1": "Achten Sie nach dem Hinzufügen der Datenbank unbedingt {BTN_} -Seite hinzu, fügt geplante Sicherungsaufgaben hinzu, um Ihre Datensicherheit zu gewährleisten.",
+			"index_1": "Achten Sie nach dem Hinzufügen der Datenbank unbedingt {btn_} -Seite hinzu, fügt geplante Sicherungsaufgaben hinzu, um Ihre Datensicherheit zu gewährleisten.",
 			"index_2": "Cron"
 		},
 		"index_8": "phpmyadmin [{0}]",
@@ -18,7 +18,7 @@
 		"index_13": "Benutzername",
 		"index_14": "Passwort",
 		"index_15": {
-			"index_1": "Get Passwd fehlgeschlagen, klicken Sie auf {Fehler}!",
+			"index_1": "Get Passwd fehlgeschlagen, klicken Sie auf {error}!",
 			"index_2": "zurücksetzen"
 		},
 		"index_16": "Backup",
@@ -197,9 +197,9 @@
 			"index_8": "Wenn der Zugriff über das Panel nicht mehr reagiert, verwenden Sie bitte [öffentlicher Zugriff], um auf PhpMyAdmin zuzugreifen",
 			"index_9": "Wenn der Zugriff 502 angezeigt wird, überprüfen Sie bitte den [PHP -Status] oder versuchen Sie, [PHP -Version zu ändern].",
 			"index_10": "Passwortfreier Zugriff",
-			"index_11": "{0} phpmyadmin Service",
+			"index_11": "Passwortfreier Zugriff",
 			"index_12": "Sind Sie sicher {0} phpmyadmin Service?",
-			"index_13": "Spring phpmyadmin, bitte warte ...",
+			"index_13": "Möchten Sie den phpMyAdmin-Dienst wirklich {0}?",
 			"index_14": "PHPMYADMIN -Kennwortzugriff wurde aktiviert. Bitte verwenden Sie [öffentlicher Zugriff]",
 			"index_15": "Zugangsport",
 			"index_16": "Öffnen Sie SSL",

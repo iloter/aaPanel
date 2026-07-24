@@ -274,12 +274,6 @@ class firewalls:
             msg = public.get_msg_gettext('SSH service turned on')
             act = 'start'
 
-        # if not os.path.exists('/etc/redhat-release'):
-        #     public.ExecShell('service ssh ' + act)
-        # elif version.find(' 7.') != -1 or version.find(' 8.') != -1 or version.find('Fedora') != -1:
-        #     public.ExecShell("systemctl "+act+" sshd")
-        # else:
-        # 全试一次?
         public.ExecShell("/etc/init.d/sshd " + act)
         public.ExecShell('service ssh ' + act)
         public.ExecShell("systemctl " + act + " sshd")
@@ -289,6 +283,7 @@ class firewalls:
             public.WriteLog("TYPE_FIREWALL", msg)
             return public.return_message(-1, 0, msg)
         public.WriteLog("TYPE_FIREWALL", msg)
+        public.set_module_logs('firewall', 'SetSshStatus')
         return public.return_message(0, 0, public.lang("Setup successfully!"))
 
     # 设置ping

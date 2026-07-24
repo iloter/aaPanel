@@ -540,7 +540,7 @@
 			"index_43": "Please close and clear the cache before turning on maintenance mode.",
 			"index_44": "Note: To avoid website being downgraded by indexing engines, please do not enable maintenance mode for a long time.",
 			"index_45": "Recommend uploading HTML files for templates, and use data URLs for static files of templates.",
-			"index_46": "If you want your template to use the template configuration function of aapanel, you can start maintenance mode once and modify the /wp-content/mintensionce/mintensione-template.html file, keeping the '{{}}' placeholder."
+			"index_46": "If you want your template to use the template configuration function of aapanel, you can start maintenance mode once and modify the /wp-content/mintensionce/mintensione-template.html file, keeping the {'{'}{'{'}{'}'}{'}'} placeholder."
 		},
 		"Label": {
 			"index_1": "Reset password",

@@ -4603,6 +4603,14 @@ bt.soft = {
 				if (callback) callback(rdata);
 			});
 		},
+		search_config: function (version, search, callback) {
+			//获取禁用函数,扩展列表
+			// var loading = bt.load();
+			bt.send('GetPHPConfig', 'ajax/GetPHPConfig', { version: version, search: search }, function (rdata) {
+				// loading.close();
+				if (callback) callback(rdata);
+			});
+		},
 		get_limit_config: function (version, callback) {
 			//获取超时限制,上传限制
 			var loading = bt.load();

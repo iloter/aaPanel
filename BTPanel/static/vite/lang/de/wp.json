@@ -182,7 +182,7 @@
 			"index_43": "Bitte schließen und leeren Sie den Cache, bevor Sie den Wartungsmodus aktivieren.",
 			"index_44": "Hinweis: Um zu verhindern, dass die Website durch Indexierungs-Engines herabgestuft wird, aktivieren Sie den Wartungsmodus bitte nicht für längere Zeit.",
 			"index_45": "Empfehlen Sie das Hochladen von HTML-Dateien für Vorlagen und die Verwendung von Daten-URLs für statische Vorlagendateien.",
-			"index_46": "Wenn Sie möchten, dass Ihre Vorlage die Vorlagenkonfigurationsfunktion von aapanel verwendet, können Sie den Wartungsmodus einmal starten und die Datei /wp-content/mintensionce/mintensione-template.html ändern und dabei den Platzhalter „{{}}“ beibehalten."
+			"index_46": "Wenn Sie möchten, dass Ihre Vorlage die Vorlagenkonfigurationsfunktion von aapanel verwendet, können Sie den Wartungsmodus einmal starten und die Datei /wp-content/mintensionce/mintensione-template.html ändern und dabei den Platzhalter „{'{'}{'{'}{'}'}{'}'}“ beibehalten."
 		},
 		"Label": {
 			"index_1": "Passwort zurücksetzen",

@@ -78,7 +78,7 @@
 			"index_56": "Tôi đã xử lý",
 			"index_57": "Liệt kê",
 			"index_58": "IP của bạn không tồn tại trong danh sách đen được Aapanel biết đến",
-			"index_59": "Kiểm tra {a} giải quyết thành {b} chống lại {C} Danh sách đen đã biết ...",
+			"index_59": "Kiểm tra {a} giải quyết thành {b} chống lại {c} Danh sách đen đã biết ...",
 			"index_60": "Danh sách đen",
 			"index_61": "Kiểm tra thời gian",
 			"index_62": "{0} giây trước",
@@ -522,6 +522,12 @@
 				"open": "Mở",
 				"configurationParameters": "Tham số cấu hình",
 				"active": "Đang hoạt động",
+				"conflictTitle": "Xung đột môi trường cài đặt",
+				"conflictAlertTitle": "Đã phát hiện xung đột cổng",
+				"conflictAlertDescription": "Các cổng sau đang được ứng dụng khác sử dụng. Hãy xử lý xung đột cổng rồi thử lại.",
+				"checkInstallFailed": "Kiểm tra môi trường cài đặt thất bại. Hãy kiểm tra môi trường máy chủ và thử lại.",
+				"conflictOccupied": "Đang sử dụng",
+				"conflictProcess": "Tiến trình",
 				"successTip": "Mở bảng điều khiển BillionMail sau khi cài đặt và hoàn tất cấu hình tên miền, DNS và xác minh người gửi."
 			}
 		}

@@ -225,6 +225,7 @@
 			"index_7": "Nyalakan Layanan SSH",
 			"index_8": "Apakah Anda pasti akan mengaktifkan layanan SSH?",
 			"index_9": "Mematikan Layanan SSH juga akan keluar semua pengguna yang masuk, Lanjutkan?",
+			"index_10": "Manajemen akun sistem SSH",
 			"Basic": {
 				"index_1": "Login Kata Sandi SSH",
 				"index_2": "Login Kunci SSH",
@@ -268,6 +269,42 @@
 					"whitelist_1": "Harap masukkan IP",
 					"whitelist_2": "AKU P"
 				}
+			},
+			"Account": {
+				"create": "Buat pengguna sistem",
+				"conversion_title": "Manajemen akun sistem SSH",
+				"overview": "Ikhtisar",
+				"feature_modify_password": "Ubah kata sandi pengguna sistem",
+				"feature_delete_user": "Hapus pengguna sistem",
+				"feature_anti_intrusion": "Anti-intrusi",
+				"username": "Nama pengguna",
+				"protection": "Perlindungan eskalasi hak akses",
+				"log": "Pencatatan perintah",
+				"remark": "Keterangan",
+				"command_log": "Log perintah",
+				"reset_password": "Atur ulang kata sandi",
+				"create_title": "Buat pengguna sistem",
+				"reset_title": "Atur ulang kata sandi: {0}",
+				"password": "Kata sandi",
+				"new_password": "Kata sandi baru",
+				"username_placeholder": "Masukkan nama pengguna",
+				"password_placeholder": "Masukkan kata sandi",
+				"username_invalid": "Nama pengguna harus terdiri dari 2-20 karakter dan hanya boleh berisi huruf dan angka. Karakter khusus tidak diperbolehkan.",
+				"password_min": "Kata sandi harus berisi setidaknya 8 karakter",
+				"delete_title": "Hapus pengguna: {0}",
+				"delete_content": "Setelah dihapus, pengguna sistem ini tidak dapat lagi masuk ke server. Tindakan ini tidak dapat dibatalkan.",
+				"confirm_delete": "Konfirmasi penghapusan",
+				"tip_1": "Saat perlindungan eskalasi hak akses diaktifkan, perintah berisiko tinggi akan dibatasi dan dicatat.",
+				"tip_2": "Saat perlindungan dinonaktifkan, perintah yang dijalankan pengguna hanya akan dicatat dan dilacak.",
+				"tip_3": "Perlindungan saat ini berfokus pada risiko eskalasi dari pengguna seperti www, redis, dan mysql.",
+				"plugin_missing": "Instal plugin anti-intrusi sebelum mengelola akun sistem SSH",
+				"install_plugin": "Instal plugin",
+				"professional_only": "Fitur edisi Profesional",
+				"professional_desc": "Manajemen akun sistem SSH mencakup pembuatan, penghapusan, dan pengelolaan akun pengguna SSH di server. Akun ini menyediakan akses jarak jauh yang aman melalui SSH dan biasanya dikelola administrator agar hanya pengguna yang berwenang yang dapat mengakses server.",
+				"upgrade": "Tingkatkan sekarang",
+				"no_logs": "Saat ini tidak ada log perintah yang tersedia",
+				"api_create": "Membuat pengguna sistem, harap tunggu...",
+				"api_delete": "Menghapus pengguna sistem, harap tunggu..."
 			},
 			"Logs": {
 				"index_1": "Semua",
@@ -636,6 +673,156 @@
 						"desc": "Temukan anomali dan risiko keamanan melalui analisis log"
 					}
 				}
+			}
+		},
+		"Overview": {
+			"header": {
+				"title": "Security Overview",
+				"subtitle": "Monitor your server security posture and respond to threats before they impact your services.",
+				"systemRunning": "System running"
+			},
+			"sections": {
+				"securityScan": "Security Scan",
+				"recommendedActions": "Recommended Actions",
+				"recentSecurityEvents": "Recent Security Events",
+				"scanOverview": "Scan Overview",
+				"last7Days": "Last 7 days",
+				"scanning": "Scanning..."
+			},
+			"Api": {
+				"settingStatus": "Applying settings, please wait..."
+			},
+			"common": {
+				"noData": "No data yet"
+			},
+			"protection": {
+				"title": "Protection Status",
+				"enabledCount": "Enabled {enabled}/{total}",
+				"confirm": {
+					"enableTitle": "Aktifkan {name}",
+					"enableContent": "Apakah Anda yakin ingin mengaktifkan {name}?",
+					"disableTitle": "Nonaktifkan {name}",
+					"disableContent": "Apakah Anda yakin ingin menonaktifkan {name}?"
+				},
+				"names": {
+					"firewall": "Firewall",
+					"tamperCore": "Tamper-proof for Enterprise",
+					"ssh": "SSH Protection",
+					"btwaf": "Nginx WAF",
+					"fail2ban": "Fail2Ban"
+				},
+				"status": {
+					"enabled": "Enabled",
+					"disabled": "Disabled",
+					"notInstalled": "Not installed"
+				},
+				"details": {
+					"allowedPorts": "Allowed ports: ",
+					"portSeparator": ", ",
+					"monitoringPrefix": "Monitoring ",
+					"monitoringSuffix": " core files for changes",
+					"currentPort": "Current port: ",
+					"keyLogin": "Key login: ",
+					"passwordLogin": "Password login: ",
+					"blocks": "Blocks:",
+					"todayRequest": "Permintaan hari ini: ",
+					"todayMaliciousRequest": "Permintaan berbahaya hari ini: ",
+					"blockedPrefix": "Blocked ",
+					"bruteForceMiddle": " brute-force attempts · ",
+					"bannedIpSuffix": " IPs banned"
+				},
+				"settings": {
+					"quickAllowPorts": "Quick allow ports",
+					"configureProduct": "Configure {name}",
+					"sshSettings": "SSH settings"
+				},
+				"forms": {
+					"portNumber": "Nomor port"
+				},
+				"ssh": {
+					"keyLoginDesc": "Izinkan login SSH dengan kunci",
+					"passwordLoginDesc": "Izinkan login SSH dengan kata sandi",
+					"keysTitle": "Kunci SSH"
+				},
+				"attacks": {
+					"cc": "CC attacks",
+					"xss": "XSS",
+					"sql": "SQL injection"
+				}
+			},
+			"scanCards": {
+				"labels": {
+					"securityRisk": "Security Risk",
+					"malwareDetection": "Malware Detection",
+					"websiteVulnerability": "Website Vulnerability",
+					"baseline": "Baseline"
+				},
+				"waitingFirstScan": "Waiting for first scan",
+				"details": "Details →",
+				"detailsAria": "{label} details"
+			},
+			"riskLevels": {
+				"critical": "Critical",
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low",
+				"normal": "Normal"
+			},
+			"recommended": {
+				"emptyTitle": "No recommended actions",
+				"emptyDesc": "Recommended actions will be generated automatically after a security scan.",
+				"noDescription": "No recommendation details",
+				"defaultTitle": "Recommended Action",
+				"badgeItems": "{count} items",
+				"badgeZeroItems": "0 items",
+				"buttons": {
+					"fixNow": "Fix Now",
+					"resolve": "Resolve",
+					"review": "Review",
+					"view": "View"
+				}
+			},
+			"events": {
+				"title": "Recent Security Events",
+				"defaultTitle": "Security event",
+				"noEventDetails": "No event details",
+				"emptyTitle": "No security events",
+				"emptyDesc": "Your server is running normally. Security events will appear here after a scan.",
+				"allLoaded": "All security events loaded",
+				"viewAll": "View All →",
+				"autoRecord": "Events will be recorded after the first scan",
+				"filters": {
+					"all": "All categories",
+					"info": "Info",
+					"low": "Low",
+					"medium": "Medium",
+					"high": "High",
+					"critical": "Critical",
+					"searchPlaceholder": "Search security events"
+				},
+				"status": {
+					"normal": "Normal",
+					"warning": "Warning",
+					"blocked": "Blocked"
+				}
+			},
+			"health": {
+				"status": {
+					"scanning": "Scanning",
+					"pending": "Not scanned"
+				},
+				"levels": {
+					"healthy": "Healthy",
+					"good": "Good",
+					"attention": "Needs Attention",
+					"critical": "Critical"
+				},
+				"scanningDesc": "Running a full server security scan",
+				"pleaseWait": "Please wait",
+				"lastScan": "Last scan: {time}",
+				"notScanned": "No security scan has been run yet.",
+				"clickToStart": "Click Start Scan to begin.",
+				"startScan": "Start Scan"
 			}
 		},
 		"NetworkScan": {

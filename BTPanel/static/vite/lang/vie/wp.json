@@ -182,7 +182,7 @@
 			"index_43": "Vui lòng đóng và xóa bộ nhớ đệm trước khi bật chế độ bảo trì.",
 			"index_44": "Lưu ý: Để tránh website bị hạ cấp bởi các công cụ lập chỉ mục, vui lòng không bật chế độ bảo trì trong thời gian dài.",
 			"index_45": "Đề xuất tải lên tệp HTML cho mẫu và sử dụng URL dữ liệu cho tệp tĩnh của mẫu.",
-			"index_46": "Nếu bạn muốn mẫu của mình sử dụng chức năng cấu hình mẫu của aapanel, bạn có thể bắt đầu chế độ bảo trì một lần và sửa đổi tệp /wp-content/mintensionce/mintensione-template.html, giữ nguyên phần giữ chỗ '{{}}'."
+			"index_46": "Nếu bạn muốn mẫu của mình sử dụng chức năng cấu hình mẫu của aapanel, bạn có thể bắt đầu chế độ bảo trì một lần và sửa đổi tệp /wp-content/mintensionce/mintensione-template.html, giữ nguyên phần giữ chỗ {'{'}{'{'}{'}'}{'}'}."
 		},
 		"Label": {
 			"index_1": "Đặt lại mật khẩu",

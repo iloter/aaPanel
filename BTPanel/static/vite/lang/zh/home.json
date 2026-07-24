@@ -101,6 +101,7 @@
     "systemRestartReminder": "系统重启提醒",
     "serverRestartedAt": "您的服务器在 {time} 发生了重启。",
     "iKnow": "我知道了",
+    "memoEmpty": "当前内容为空，点击编辑",
     "SetupTabs": {
       "softwareInstall": "软件安装",
       "projectCreate": "项目创建",
@@ -225,7 +226,7 @@
       "index_22": "处理恶意文件",
       "index_23": "OSS扫描",
       "index_24": "启用OSS挂载目录的扫描",
-      "index_25": "自动拦截开关",
+      "index_25": "隔离文件",
       "index_26": "动态查杀开关",
       "index_27": "当前系统未挂载OSS目录，因此无法启用OSS扫描",
       "index_28": "启用动态查杀",
@@ -328,7 +329,7 @@
         "description": "只需几分钟，即可完成第一个项目的设置。",
         "softwarePage": "软件页面",
         "lastConfig": "上次部署：",
-        "skipWizard": "跳过引导",
+        "skipWizard": "跳过",
         "options": {
           "wordpress": {
             "title": "创建 WordPress 站点",

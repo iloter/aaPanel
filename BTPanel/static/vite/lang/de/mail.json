@@ -78,7 +78,7 @@
 			"index_56": "Ich habe verarbeitet",
 			"index_57": "Gelistet",
 			"index_58": "Ihre IP existiert nicht in der von Aapanel bekannten schwarzen Liste",
-			"index_59": "Überprüfen Sie {a}, das sich auf {B} gegen {c} bekannte Blacklists beschließt ...",
+			"index_59": "Überprüfen Sie {a}, das sich auf {b} gegen {c} bekannte Blacklists beschließt ...",
 			"index_60": "Schwarze Liste",
 			"index_61": "Überprüfen Sie die Zeit",
 			"index_62": "{0} Sekunden",
@@ -522,6 +522,12 @@
 				"open": "Öffnen",
 				"configurationParameters": "Konfigurationsparameter",
 				"active": "Aktiv",
+				"conflictTitle": "Konflikt in der Installationsumgebung",
+				"conflictAlertTitle": "Portkonflikte erkannt",
+				"conflictAlertDescription": "Die folgenden Ports werden von anderen Anwendungen verwendet. Beheben Sie die Portkonflikte und versuchen Sie es erneut.",
+				"checkInstallFailed": "Die Prüfung der Installationsumgebung ist fehlgeschlagen. Prüfen Sie die Serverumgebung und versuchen Sie es erneut.",
+				"conflictOccupied": "Belegt",
+				"conflictProcess": "Prozess",
 				"successTip": "Öffnen Sie nach der Installation die BillionMail-Konsole und schließen Sie Domain-, DNS- und Absenderverifizierung ab."
 			}
 		}

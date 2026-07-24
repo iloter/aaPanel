@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 from datetime import datetime
 
@@ -121,10 +122,21 @@ class SSHbase:
     def parse_login_entry(parts, year):
         """解析登录条目"""
         try:
+            if len(parts) < 6:
+                return None
+            if "from" not in parts or ("Accepted" not in parts and "Failed" not in parts):
+                return None
+
             # 判断日志格式类型
             if 'T' in parts[0]:  # centos7以外的格式
                 # 解析ISO格式时间戳
-                dt = datetime.fromisoformat(parts[0].replace('Z', '+00:00'))
+                iso_time = parts[0].replace('Z', '+00:00')
+                try:
+                    dt = datetime.fromisoformat(iso_time)
+                except ValueError:
+                    if re.search(r'[+-]\d{4}$', iso_time):
+                        iso_time = "{}:{}".format(iso_time[:-2], iso_time[-2:])
+                    dt = datetime.fromisoformat(iso_time)
                 user_index = parts.index('user') + 1 if 'user' in parts else parts.index('for') + 1
                 ip_index = parts.index('from') + 1
                 port_index = parts.index('port') + 1 if 'port' in parts else -1
@@ -134,7 +146,8 @@ class SSHbase:
                 day = parts[1]
                 time_str = parts[2]
                 # 如果月份大于当前月，说明年份不对，直接把year修改成1970年
-                if datetime.strptime("{} {}".format(month, day), "%b %d").month > datetime.now().month:
+                log_month = datetime.strptime("{} {}".format(month, day), "%b %d").month
+                if log_month > datetime.now().month:
                     year = "1970"
                 dt_str = "{} {} {} {}".format(month, day, year, time_str)
                 dt = datetime.strptime(dt_str, "%b %d %Y %H:%M:%S")

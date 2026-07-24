@@ -47,7 +47,7 @@ class IptablesServices(Base):
             if stderr:
                 return self._result(False, public.lang(f"Failed to set up rule:{stderr}"))
 
-            return self._result(True, public.lang("Failed to set up rule"))
+            return self._result(True, public.lang("Set up successfully"))
         except Exception as e:
             return self._result(False, public.lang(f"Failed to set up rule:{str(e)}"))
 

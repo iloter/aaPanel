@@ -31,6 +31,10 @@ from mod.project.backup_restore.modules.firewall_module import FirewallModule
 from mod.project.backup_restore.modules.plugin_module import PluginModule
 from mod.project.backup_restore.modules.mail_module import MailModule
 from mod.project.backup_restore.modules.ssl_model import SSLModel
+try:
+    from mod.project.backup_restore.modules.node_module import NodeModule
+except:
+    NodeModule = None
 
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
@@ -100,6 +104,34 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
             migrate_backup_info = json.loads(public.ReadFile(self.migrate_backup_info_path))
             backup_list.append(migrate_backup_info)
             public.ExecShell("rm -f {}".format(self.migrate_backup_info_path))
+
+        for backup_conf in backup_list:
+            if not isinstance(backup_conf, dict) or str(backup_conf.get("backup_status")) != "2":
+                continue
+            timestamp = backup_conf.get("timestamp")
+            if not timestamp:
+                continue
+            backup_json_path = os.path.join(self.base_path, "{}_backup".format(timestamp), "backup.json")
+            history_info_file = os.path.join(self.history_info_path, "{}_backup.info".format(timestamp))
+            for info_file in (backup_json_path, history_info_file):
+                if not os.path.exists(info_file):
+                    continue
+                try:
+                    backup_info = json.loads(public.ReadFile(info_file) or "{}")
+                    data_list = backup_info.get("data_list", {})
+                    if not isinstance(data_list, dict):
+                        continue
+                    backup_count = {
+                        "success": self.count_backup_status(data_list, 2),
+                        "failed": self.count_backup_status(data_list, 3),
+                    }
+                    backup_conf["backup_count"] = backup_count
+                    if backup_info.get("backup_count") != backup_count:
+                        backup_info["backup_count"] = backup_count
+                        public.WriteFile(info_file, json.dumps(backup_info))
+                    break
+                except:
+                    continue
 
         public.WriteFile(self.bakcup_task_json, json.dumps(backup_list))
         return backup_list
@@ -187,13 +219,43 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
             print(public.lang("Backup configuration file does not exist"))
             return public.returnMsg(False, public.lang("Backup configuration file does not exist"))
 
+        backup_data_list = self.normalize_backup_data(backup_conf.get("backup_data"))
+        backup_conf['backup_data'] = backup_data_list
+        backup_conf['site_id'] = self.normalize_backup_id_list(backup_conf.get("site_id"))
+        wp_site_id_value = backup_conf.get("wp_site_id")
+        if wp_site_id_value is None:
+            wp_site_id_value = backup_conf.get("wp_id")
+        backup_conf['wp_site_id'] = self.normalize_backup_id_list(wp_site_id_value)
+        backup_conf.pop("wp_id", None)
+        backup_conf['database_id'] = self.normalize_backup_id_list(backup_conf.get("database_id"))
         backup_conf['data_list'] = {}
-        backup_conf['data_list']['soft'] = self.get_soft_data(timestamp, packet=True)
-        backup_conf['data_list']['site'] = self.get_site_backup_conf(timestamp)
-        backup_conf['data_list']['ssl'] = self.get_ssl_backup_conf(timestamp)
-        backup_conf['data_list']['database'] = self.get_database_backup_conf(timestamp)
-        backup_conf['data_list']['ftp'] = self.backup_ftp_data(timestamp)
+        if self.backup_type_enabled(backup_data_list, "soft"):
+            backup_conf['data_list']['soft'] = self.get_soft_data(timestamp, packet=True)
+        else:
+            backup_conf['data_list']['soft'] = {}
+
+        if self.backup_type_enabled(backup_data_list, "site", "wp_tools"):
+            backup_conf['data_list']['site'] = self.get_site_backup_conf(timestamp)
+        else:
+            backup_conf['data_list']['site'] = []
+
+        if self.backup_type_enabled(backup_data_list, "ssl"):
+            backup_conf['data_list']['ssl'] = self.get_ssl_backup_conf(timestamp)
+        else:
+            backup_conf['data_list']['ssl'] = {"ssl_list": [], "provider_list": []}
+
+        if self.backup_type_enabled(backup_data_list, "database"):
+            backup_conf['data_list']['database'] = self.get_database_backup_conf(timestamp)
+        else:
+            backup_conf['data_list']['database'] = []
+
+        if self.backup_type_enabled(backup_data_list, "ftp"):
+            backup_conf['data_list']['ftp'] = self.backup_ftp_data(timestamp)
+        else:
+            backup_conf['data_list']['ftp'] = []
+
         backup_conf['backup_status'] = 1
+        self.save_backup_conf(str(timestamp), backup_conf)
         public.WriteFile(backup_path + 'backup.json', json.dumps(backup_conf))
 
     def backup_data(self, timestamp: int):
@@ -206,30 +268,47 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
 
         try:
             public.WriteFile(self.backup_pl_file, timestamp)
+            self.write_initial_task_state("backup", timestamp)
 
             backup_conf = self.get_backup_conf(timestamp)
+            if not backup_conf:
+                return public.returnMsg(False, public.lang("Backup configuration file does not exist"))
+            backup_data_list = self.normalize_backup_data(backup_conf.get("backup_data"))
+            backup_conf['backup_data'] = backup_data_list
+            backup_conf['site_id'] = self.normalize_backup_id_list(backup_conf.get("site_id"))
+            wp_site_id_value = backup_conf.get("wp_site_id")
+            if wp_site_id_value is None:
+                wp_site_id_value = backup_conf.get("wp_id")
+            backup_conf['wp_site_id'] = self.normalize_backup_id_list(wp_site_id_value)
+            backup_conf.pop("wp_id", None)
+            backup_conf['database_id'] = self.normalize_backup_id_list(backup_conf.get("database_id"))
             backup_conf['backup_status'] = 1
             self.save_backup_conf(timestamp, backup_conf)
             start_time = int(time.time())
             # 构造备份初始配置
             self.add_backup_task(timestamp)
+            self.clear_initial_task_state("backup")
             try:
-                self.backup_site_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "site", "wp_tools"):
+                    self.backup_site_data(timestamp)
             except:
                 pass
 
             try:
-                self.backup_database_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "database"):
+                    self.backup_database_data(timestamp)
             except:
                 pass
 
             try:
-                self.backup_ssl_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "ssl"):
+                    self.backup_ssl_data(timestamp)
             except:
                 pass
 
             try:
-                CrontabModule().backup_crontab_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "crontab"):
+                    CrontabModule().backup_crontab_data(timestamp)
             except:
                 pass
 
@@ -240,19 +319,34 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
             #     pass
 
             try:
-                FirewallModule().backup_firewall_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "ssh"):
+                    SshModule().backup_ssh_data(timestamp)
+            except Exception as e:
+                public.print_log("backup ssh error: {}".format(str(e)))
+
+            try:
+                if self.backup_type_enabled(backup_data_list, "firewall"):
+                    FirewallModule().backup_firewall_data(timestamp)
             except:
                 pass
 
             try:
-                MailModule().backup_vmail_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "vmail"):
+                    MailModule().backup_vmail_data(timestamp)
             except:
                 pass
 
             try:
-                PluginModule().backup_plugin_data(timestamp)
+                if self.backup_type_enabled(backup_data_list, "plugin"):
+                    PluginModule().backup_plugin_data(timestamp)
             except:
                 pass
+
+            try:
+                if NodeModule is not None and self.backup_type_enabled(backup_data_list, "node"):
+                    NodeModule().backup_node_data(timestamp)
+            except Exception as e:
+                public.print_log("backup node error: {}".format(str(e)))
 
             try:
                 self.write_backup_data(timestamp)
@@ -277,6 +371,7 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
         except Exception as e:
             return public.returnMsg(False, public.lang(f"something went wrong! Error: {str(e)}"))
         finally:
+            self.clear_initial_task_state("backup")
             if os.path.exists(self.backup_pl_file):
                 public.ExecShell("rm -f {}".format(self.backup_pl_file))
 
@@ -305,11 +400,37 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
         self.update_backup_data_list(timestamp, data_list)
 
     def count_backup_status(self, data, status_code):
-        return sum(
-            1 for category in data.values()
-            for item in category
-            if isinstance(item, dict) and item.get('status') == status_code
-        )
+        def json_count(file_path):
+            try:
+                content = public.ReadFile(file_path).strip()
+                value = json.loads(content)
+                return len(value) if isinstance(value, (list, dict)) else 0
+            except:
+                return 0
+
+        def status_count(value):
+            if isinstance(value, list):
+                return sum(status_count(item) for item in value)
+            if not isinstance(value, dict):
+                return 0
+            if "status" in value:
+                return 1 if value.get("status") == status_code else 0
+            return sum(status_count(item) for item in value.values())
+
+        count = 0
+        for category_key, category_data in data.items():
+            if category_key == "crontab" and isinstance(category_data, dict):
+                if category_data.get("status") == status_code:
+                    count += json_count(category_data.get("crontab_json"))
+            elif category_key == "firewall" and isinstance(category_data, dict):
+                if category_data.get("status") == status_code:
+                    count += 4
+            elif category_key == "vmail" and isinstance(category_data, dict):
+                if category_data.get("status") == status_code and category_data.get("vmail_backup_name"):
+                    count += 1
+            else:
+                count += status_count(category_data)
+        return count
 
     def write_backup_data(self, timestamp):
         self.print_log("====================================================", "backup")
@@ -318,7 +439,7 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
         backup_conf = self.get_backup_conf(timestamp)
 
         backup_log_path = self.base_path + str(timestamp) + "_backup/"
-        public.ExecShell('\cp -rpa {} {}'.format(self.backup_log_file, backup_log_path))
+        public.ExecShell('\\cp -rpa {} {}'.format(self.backup_log_file, backup_log_path))
 
         conf_data = json.loads((public.ReadFile("/www/backup/backup_restore/{}_backup/backup.json".format(timestamp))))
         status_2_count = self.count_backup_status(conf_data['data_list'], 2)
@@ -328,6 +449,10 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
         file_time = dt_object.strftime('%Y%m%d-%H%M')
         tar_file_name = file_time + "_" + str(timestamp) + "_backup.tar.gz"
         conf_data['backup_status'] = 1
+        conf_data["backup_count"] = {
+            "success": status_2_count,
+            "failed": status_3_count,
+        }
         public.WriteFile("/www/backup/backup_restore/{}_backup/backup.json".format(timestamp), json.dumps(conf_data))
 
         public.ExecShell("cd /www/backup/backup_restore && tar -czvf {} {}_backup".format(tar_file_name, timestamp))
@@ -353,6 +478,9 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
         tar_file_name = "/www/backup/backup_restore/" + tar_file_name
         if storage_type != "local" and os.path.exists(tar_file_name):
             cloud_name_cn = "cloud storage"
+            backup_conf["cloud_upload_status"] = 1
+            backup_conf["cloud_storage"] = storage_type
+            # public.print_log("[backup_restore] cloud upload start: timestamp={}, storage_type={}, file={}".format(timestamp, storage_type, tar_file_name))
             self.print_log(public.lang("Uploading backup file to cloud storage..."), "backup")
             try:
                 from cloud_stora_upload_v2 import CloudStoraUpload
@@ -372,10 +500,21 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
                 if not backup_path.endswith('/'):
                     backup_path += '/'
                 upload_path = os.path.join(backup_path, "backup_restore", os.path.basename(tar_file_name))
+                backup_conf["cloud_name"] = cloud_name_cn
+                backup_conf["cloud_upload_path"] = upload_path
                 if _cloud.cloud_upload_file(tar_file_name, upload_path):
+                    backup_conf["cloud_upload_status"] = 2
+                    # public.print_log("[backup_restore] cloud upload success: timestamp={}, storage_type={}, path={}".format(timestamp, storage_type, upload_path))
                     self.print_log(public.lang("Successfully uploaded to {}").format(cloud_name_cn), "backup")
+                else:
+                    backup_conf["cloud_upload_status"] = 3
+                    # public.print_log("[backup_restore] cloud upload failed: timestamp={}, storage_type={}, path={}".format(timestamp, storage_type, upload_path))
+                    self.print_log(public.lang("Failed to upload to {}").format(cloud_name_cn), "backup")
             except Exception as e:
                 import traceback
+                backup_conf["cloud_upload_status"] = 3
+                backup_conf["cloud_name"] = cloud_name_cn
+                # public.print_log("[backup_restore] cloud upload exception: timestamp={}, storage_type={}, error={}".format(timestamp, storage_type, str(e)))
                 public.print_log(traceback.format_exc())
                 self.print_log(
                     public.lang("Error occurred while uploading to {}: {}").format(cloud_name_cn, str(e)),
@@ -445,6 +584,10 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
                 'err_info': []
             }
 
+        def create_initial_result(backup_timestamp=None):
+            backup_log_data = public.ReadFile(backup_log_file) if os.path.exists(backup_log_file) else ""
+            return self.build_initial_task_progress("backup", backup_timestamp, backup_log_data)
+
         # 检查备份是否已完成
         if os.path.exists(backup_success_file):
             success_time = int(os.path.getctime(backup_success_file))
@@ -469,9 +612,12 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
             if os.path.exists(backup_pl_file):
                 timestamp = public.ReadFile(backup_pl_file).strip()
                 if not timestamp:
-                    return public.ReturnMsg(False,
-                                            public.lang("Backup process is running, but unable to retrieve timestamp"))
+                    return public.ReturnMsg(True, create_initial_result())
             else:
+                init_state = self.get_initial_task_state("backup")
+                if init_state:
+                    return public.ReturnMsg(True, create_initial_result(init_state.get("timestamp")))
+
                 # 等待2秒，可能是备份刚刚完成
                 time.sleep(2)
                 if os.path.exists(backup_success_file):
@@ -485,8 +631,7 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
                 if os.path.exists(backup_pl_file):
                     timestamp = public.ReadFile(backup_pl_file).strip()
                     if not timestamp:
-                        return public.ReturnMsg(False, public.lang(
-                            "Backup process is running, but unable to retrieve timestamp"))
+                        return public.ReturnMsg(True, create_initial_result())
                 else:
                     return public.ReturnMsg(False, public.lang(
                         "No ongoing backup tasks found. Please check the backup list to see if the backup is completed"))
@@ -496,8 +641,7 @@ class BackupManager(SiteModule, DatabaseModule, FtpModule, SSLModel):
             count = 0
             while 1:
                 if count >= 3:
-                    return public.ReturnMsg(False, public.lang("Backup configuration file does not exist: {}").format(
-                        backup_json_path))
+                    return public.ReturnMsg(True, create_initial_result(timestamp))
                 count += 1
                 if not os.path.exists(backup_json_path):
                     time.sleep(1)

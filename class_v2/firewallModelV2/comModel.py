@@ -291,9 +291,11 @@ class main(Base):
                     self.set_port_rule(get)
             self.firewall.reload()
             public.WriteLog("system firewall", "Firewall activation")
+            public.set_module_logs('firewall', 'set_firewall_status')
             return public.return_message(0 if start_status['status'] else -1, 0, start_status['msg'])
         else:
             data = self.firewall.stop()
+            public.set_module_logs('firewall', 'set_firewall_status')
             return public.return_message(0 if data['status'] else -1, 0, data['msg'])
 
     # 2024/5/13 下午3:50 检查指定端口是否已经存在，如果存在则返回False，否则返回True

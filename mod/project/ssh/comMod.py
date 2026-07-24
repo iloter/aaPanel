@@ -110,7 +110,11 @@ class main(JournalctlManage, SecureManage):
         @return: {"status": True, "msg": "清空成功"}
         """
 
+        if 'message' in self.ssh_log_path:
+            return public.returnMsg(False, 'The current system SSH logs are integrated logs and cannot be cleared through this function!')
+        
         public.ExecShell("rm -rf /var/log/secure-*;rm -rf /var/log/auth.log.*".format())
+        public.ExecShell("echo '' > {}".format(self.ssh_log_path))
 
         return public.return_message(0, 0, 'Clearance successful.')
 
@@ -228,4 +232,4 @@ class main(JournalctlManage, SecureManage):
         task_obj = panelTask.bt_task()
         task_id = task_obj.create_task('SSH blocking and IP bursting programme', 0, exec_shell)
         public.set_module_logs('SSH', 'run_ban_login_failed_ip', 1)
-        return {'status': True, 'msg': 'Task created.', 'task_id': task_id}
+        return public.return_message(0 ,0,{'message': 'Task created.', 'task_id': task_id})

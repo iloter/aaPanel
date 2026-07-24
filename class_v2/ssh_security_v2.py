@@ -13,6 +13,7 @@ from public.validate import Param
 
 
 class ssh_security:
+    __safe_password_re = re.compile(r'^[A-Za-z0-9]{8,50}$')
     __type_list = ['ed25519', 'ecdsa', 'rsa', 'dsa']
     __key_type_file = '{}/data/ssh_key_type.pl'.format(public.get_panel_path())
     __key_files = ['/root/.ssh/id_ed25519', '/root/.ssh/id_ecdsa', '/root/.ssh/id_rsa', '/root/.ssh/id_rsa_bt']
@@ -102,6 +103,12 @@ class ssh_security:
     __root_login_types = {'yes': 'yes - keys and passwords', 'no': 'no - no login',
                           'without-password': 'without-password - only key login',
                           'forced-commands-only': 'forced-commands-only - can only execute commands'}
+    __protected_sys_users = {
+        'root', 'daemon', 'bin', 'sys', 'sync', 'games', 'man', 'lp', 'mail', 'news', 'uucp', 'proxy',
+        'www-data', 'backup', 'list', 'irc', 'gnats', 'nobody', 'systemd-network', 'systemd-resolve',
+        'messagebus', 'systemd-timesync', 'syslog', '_apt', 'tss', 'uuidd', 'tcpdump', 'sshd', 'pollinate',
+        'landscape', 'fwupd-refresh', 'lxd', 'www', 'mysql', 'redis', 'memcached'
+    }
 
     def __init__(self):
         if not public.M('sqlite_master').where('type=? AND name=?', ('table', 'ssh_login_record')).count():
@@ -932,6 +939,65 @@ class ssh_security:
                 user_set.append(line.split(':', 1)[0])
 
         return public.returnMsg(True, list(user_set))
+
+
+    # 检查系统加固是否开启
+    def _is_safe_mode(self, args=None):
+        if not os.path.exists('/www/server/panel/plugin/syssafe/'):
+            return False
+        data = json.loads(public.readFile('/www/server/panel/plugin/syssafe/config.json'))
+        return data['open']
+
+    def add_sys_user(self, get):
+        """添加系统用户
+        @param get:
+        @return:
+        """
+        if self._is_safe_mode():
+            return public.return_message(-1, 0, public.lang("System hardening is enabled, please disable it first"))
+        password = get.password
+        if not get.username:
+            return public.return_message(-1, 0, public.lang("The username cannot be empty"))
+        if not get.password:
+            return public.return_message(-1, 0, public.lang("The password cannot be empty"))
+        if get.username == get.password:
+            return public.return_message(-1, 0, public.lang("The username and password cannot be the same"))
+        if get.username in self.get_sys_user(get)['msg']:
+            return public.return_message(-1, 0, public.lang("The username already exists"))
+
+        if len(password) < 8: return public.return_message(-1, 0, public.lang("The password cannot be less than 8 bits long"))
+
+
+        if not self.__safe_password_re.match(password):
+            return public.return_message(-1, 0, public.lang("The password must be 8-50 characters long and can only contain letters and numbers"))
+
+        if not re.match(r'^[A-Za-z0-9]{2,20}$', get.username):
+            return public.return_message(-1, 0,  public.lang("The username must be 2-20 characters long and can only contain letters and numbers! Special characters are not allowed!"))
+
+
+        public.ExecShell('useradd -m -s /bin/bash ' + get.username)
+        public.ExecShell('echo ' + get.username + ':' + get.password + ' | chpasswd')
+        public.WriteLog("SSH", "[Security] - [SSH] - [Add %s user]" % get.username)
+        return public.return_message(0, 0,  public.lang("Added successfully"))
+    
+    def del_sys_user(self, get):
+        """删除系统用户
+        @param get:
+        @return:
+        """
+        try:
+            if not get.username:
+                return public.return_message(-1, 0, public.lang("The username cannot be empty"))
+            if get.username not in self.get_sys_user(get)['msg']:
+                return public.return_message(-1, 0, public.lang("The user does not exist"))
+            if get.username in self.__protected_sys_users:
+                return public.return_message(-1, 0, public.lang("System users cannot be deleted"))
+            if not re.match(r'^[A-Za-z0-9]{2,20}$', get.username):
+                return public.return_message(-1, 0, public.lang("The username must be 2-20 characters long and can only contain letters and numbers! Special characters are not allowed!"))
+            public.ExecShell('userdel -rf ' + get.username)
+            return public.return_message(0, 0, public.lang("Deleted successfully"))
+        except Exception as e:
+            return public.return_message(-1, 0, public.lang("Deletion failed"))
 
     def stop_root(self, get):
         '''

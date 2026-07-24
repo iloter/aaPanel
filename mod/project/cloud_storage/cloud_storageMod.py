@@ -165,6 +165,8 @@ class main():
             return self.__fail("folder_name cannot be empty")
         try:
             result = self.__create_folder_provider(provider, path, folder_name, self.__get(get, "folder_id", ""))
+            public.WriteLog("cloud_storage", f"Add new {provider} cloud directory -- {path}/{folder_name}")
+            public.set_module_logs('cloud_storage', 'create_folder')
             return self.__plugin_result(result, {"provider": provider, "path": path, "folder_name": folder_name})
         except Exception as ex:
             self.__log("create_folder failed: provider={} path={} name={} error={}".format(provider, path, folder_name, ex))
@@ -187,6 +189,7 @@ class main():
                     "file_id": file_id,
                     "is_dir": is_dir,
                 }]
+                public.WriteLog("cloud_storage", f"delete {provider} cloud directory -- {path}/{file_path}")
         if not items:
             return self.__fail("items cannot be empty")
 
@@ -199,6 +202,7 @@ class main():
                 deleted.append({"path": file_path, "file_id": file_id})
             return {"deleted": deleted}
 
+        public.set_module_logs('cloud_storage', 'Delete')
         return self.__maybe_background(get, "delete", runner)
 
     def upload_local(self, get):
@@ -357,6 +361,9 @@ class main():
         stage_start = time.time()
         result = self.__maybe_background(get, "upload_local", runner)
         self.__upload_timing_log(request_id, "return_response", stage_start, "total_sync_ms={}".format(self.__elapsed_ms(request_start)))
+
+        public.WriteLog("cloud_storage", f"Upload local {local_paths} to {provider} cloud directory {cloud_path}")
+        public.set_module_logs('cloud_storage', 'UploadLocal')
         return result
 
     def download_to_local(self, get):
@@ -396,6 +403,8 @@ class main():
                 update_progress(92, "Finishing download")
             return {"downloaded": downloaded}
 
+        public.WriteLog("cloud_storage", f"Download {provider} cloud directory {cloud_path} to local {local_path}")
+        public.set_module_logs('cloud_storage', 'DownloadToLocal')
         return self.__maybe_background(get, "download_to_local", runner)
 
     def upload_check_api(self, get):

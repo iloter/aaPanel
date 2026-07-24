@@ -522,6 +522,12 @@
 				"open": "Open",
 				"configurationParameters": "Configuration parameters",
 				"active": "Active",
+				"conflictTitle": "Installation environment conflict",
+				"conflictAlertTitle": "Port conflicts detected",
+				"conflictAlertDescription": "The following ports are occupied by other applications. Resolve the port conflicts and try again.",
+				"checkInstallFailed": "Installation environment check failed. Check the server environment and try again.",
+				"conflictOccupied": "Occupied",
+				"conflictProcess": "Process",
 				"successTip": "Open the BillionMail console after installation and finish domain, DNS, and sender verification settings."
 			}
 		}

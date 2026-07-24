@@ -522,6 +522,12 @@
 				"open": "열기",
 				"configurationParameters": "설정 매개변수",
 				"active": "활성",
+				"conflictTitle": "설치 환경 충돌",
+				"conflictAlertTitle": "포트 충돌 감지됨",
+				"conflictAlertDescription": "다음 포트를 다른 애플리케이션이 사용 중입니다. 포트 충돌을 해결한 후 다시 시도하세요.",
+				"checkInstallFailed": "설치 환경 검사에 실패했습니다. 서버 환경을 확인한 후 다시 시도하세요.",
+				"conflictOccupied": "사용 중",
+				"conflictProcess": "프로세스",
 				"successTip": "설치 후 BillionMail 콘솔을 열고 도메인, DNS, 발신자 인증 설정을 완료하세요."
 			}
 		}

@@ -7,7 +7,7 @@
 		"index_5": "Sincronizzare tutto",
 		"index_6": "Ottieni DB dal server",
 		"index_7": {
-			"index_1": "Dopo aver aggiunto il database, assicurarsi di {BTN_} la pagina aggiunge attività di backup pianificate per garantire la sicurezza dei dati.",
+			"index_1": "Dopo aver aggiunto il database, assicurarsi di {btn_} la pagina aggiunge attività di backup pianificate per garantire la sicurezza dei dati.",
 			"index_2": "Cron"
 		},
 		"index_8": "phpmyadmin [{0}]",
@@ -18,7 +18,7 @@
 		"index_13": "Nome utente",
 		"index_14": "Password",
 		"index_15": {
-			"index_1": "Ottieni passwd non riuscito, fai clic su {errore}!",
+			"index_1": "Ottieni passwd non riuscito, fai clic su {error}!",
 			"index_2": "reset"
 		},
 		"index_16": "Backup",

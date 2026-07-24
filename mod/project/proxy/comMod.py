@@ -859,6 +859,8 @@ server {{
             return source_binding
         if not source_binding:
             return public.return_message(-1, 0, public.lang("The Supervisor daemon cannot be empty!"))
+
+        public.set_module_logs('site_proxy', 'create_by_supervisor')
         return self._create(get, source_binding=source_binding)
 
     def proxy_bind_by_supervisor(self, get):

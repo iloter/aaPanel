@@ -787,7 +787,9 @@ class DataManager(SoftModule):
         }
 
         # 处理软件列表
-        if "soft" in backup_info['data_list']:
+        backup_data_detail = backup_info.get("data_list") or {}
+
+        if "soft" in backup_data_detail:
             soft_list = DataManager()._generate_soft_list(backup_info)
             # 添加到结果中
             result["data"]["data_status"]["soft_data"] = soft_list
@@ -806,10 +808,11 @@ class DataManager(SoftModule):
         if "data_list" in backup_info and "site" in backup_info["data_list"]:
             for site in backup_info["data_list"].get("site", []):
                 s_info = {
+                    "id": site.get("id"),
                     "name": site.get("name", ""),
                     "type": site.get("project_type", ""),
                     "size": site.get("size", 0),
-                    "status": site.get("status", 2),
+                    "status": site.get("restore_status", site.get("status", 2)),
                     "err_msg": site.get("msg", None)
                 }
                 # wp
@@ -820,21 +823,23 @@ class DataManager(SoftModule):
                     result["data"]["data_status"]["site_list"].append(s_info)
 
         # 处理SSL信息
-        ssl_info = backup_info["data_list"]["ssl"]
+        ssl_info = backup_data_detail.get("ssl", {"ssl_list": [], "provider_list": []})
         for ssl in ssl_info.get("ssl_list", []):
             result["data"]["data_status"]["ssl_info"]["ssl_list"].append({
+                "id": ssl.get("id"),
                 "name": ", ".join(ssl.get("dns", [])),
                 "type": ssl["info"].get("issuer_O", ""),
                 "size": ssl.get("size", 0),
-                "status": ssl.get("status", 2),
+                "status": ssl.get("restore_status", ssl.get("status", 2)),
                 "err_msg": ssl.get("msg", None)
             })
         for p in ssl_info.get("provider_list", []):
             result["data"]["data_status"]["ssl_info"]["provider_list"].append({
+                "id": p.get("id"),
                 "name": p.get("alias", ""),
                 "type": p.get("name", ""),
                 "size": p.get("size", 0),
-                "status": p.get("status", 0),
+                "status": p.get("restore_status", p.get("status", 0)),
                 "err_msg": p.get("msg", None)
             })
 
@@ -842,10 +847,11 @@ class DataManager(SoftModule):
         if "data_list" in backup_info and "database" in backup_info["data_list"]:
             result["data"]["data_status"]["database_list"] = [
                 {
+                    "id": db.get("id"),
                     "name": db.get("name", ""),
                     "type": db.get("type", ""),
                     "size": db.get("size", 0),
-                    "status": db.get("status", 0),
+                    "status": db.get("restore_status", db.get("status", 0)),
                     "err_msg": db.get("msg", None)
                 } for db in backup_info["data_list"]["database"]
             ]
@@ -854,9 +860,10 @@ class DataManager(SoftModule):
         if "data_list" in backup_info and "ftp" in backup_info["data_list"]:
             result["data"]["data_status"]["ftp_list"] = [
                 {
+                    "id": ftp.get("id"),
                     "name": ftp.get("name", ""),
                     "size": ftp.get("size", 0),
-                    "status": ftp.get("status", 0),
+                    "status": ftp.get("restore_status", ftp.get("status", 0)),
                     "err_msg": ftp.get("msg", None)
                 } for ftp in backup_info["data_list"]["ftp"]
             ]
@@ -871,6 +878,7 @@ class DataManager(SoftModule):
                     if cron_json_info:
                         crontab_list = [
                             {
+                                "id": crontab.get("id", 0),
                                 "name": crontab.get("name", ""),
                                 "size": crontab.get("id", 0),
                                 "status": 2,
@@ -935,7 +943,21 @@ class DataManager(SoftModule):
 
             try:
                 contry_data = public.ReadFile(firewall_data.get("country_data_path", ""))
-                contry_list = contry_data.split("\n")
+                if contry_data:
+                    contry_data = contry_data.strip()
+                if not contry_data:
+                    contry_list = []
+                else:
+                    try:
+                        contry_json = json.loads(contry_data)
+                        if isinstance(contry_json, list):
+                            contry_list = contry_json
+                        elif isinstance(contry_json, dict):
+                            contry_list = list(contry_json.values())
+                        else:
+                            contry_list = []
+                    except:
+                        contry_list = [line for line in contry_data.splitlines() if line.strip()]
             except:
                 pass
 
@@ -944,8 +966,8 @@ class DataManager(SoftModule):
                 "firewall_ip": len(ip_list),
                 "firewall_forward": len(forward_list),
                 "firewall_conutry": len(contry_list),
-                "status": 2,
-                "err_msg": None,
+                "status": firewall_data.get("restore_status", firewall_data.get("status", 2)),
+                "err_msg": firewall_data.get("err_msg", None),
             }
             result["data"]["data_status"]["firewall_info"] = firewall_info
 
@@ -960,7 +982,7 @@ class DataManager(SoftModule):
                         "name": plugin_name,
                         "display_name": plugin_name,
                         "size": plugin_info.get("size", 0),
-                        "status": plugin_info.get("status", 2),
+                        "status": plugin_info.get("restore_status", plugin_info.get("status", 2)),
                         "err_msg": plugin_info.get("err_msg", None)
                     } for plugin_name, plugin_info in plugin_data.items()
                 ]
@@ -971,7 +993,7 @@ class DataManager(SoftModule):
                         "name": plugin.get("name", ""),
                         "display_name": plugin.get("name", ""),
                         "size": plugin.get("size", 0),
-                        "status": 2,
+                        "status": plugin.get("restore_status", 2),
                         "err_msg": None
                     } for plugin in plugin_data
                 ]
@@ -1028,15 +1050,24 @@ class DataManager(SoftModule):
         else:
             success_file = self.base_path + f'/restore_success.pl'
 
+        def read_log_data():
+            return public.ReadFile(log_file) if os.path.exists(log_file) else ""
+
+        def create_initial_result(task_timestamp=None):
+            init_state = self.get_initial_task_state(my_type)
+            if task_timestamp is None and init_state:
+                task_timestamp = init_state.get("timestamp")
+            return public.ReturnMsg(
+                True,
+                self.build_initial_task_progress(my_type, task_timestamp, read_log_data())
+            )
+
         count = 0
         while 1:
             count += 1
             if count >= 10:
                 raise HintException(public.lang(f"{my_type} progress file not found or empty, please try again."))
-            ts = public.ReadFile(pl_file)
-            json_path = f"{self.base_path}/{ts}_backup/{my_type}.json"
             if not os.path.exists(pl_file):
-                time.sleep(1)
                 if os.path.exists(success_file):
                     success_time = int(os.path.getctime(success_file))
                     if success_time + 10 > int(time.time()):
@@ -1051,14 +1082,27 @@ class DataManager(SoftModule):
                     else:
                         public.ExecShell("rm -f {}".format(success_file))
 
-            if not os.path.exists(pl_file) or not ts or not os.path.exists(json_path):
+                if self.get_initial_task_state(my_type):
+                    return create_initial_result()
+
                 time.sleep(1)
                 continue
-            else:
-                break
+
+            ts = (public.ReadFile(pl_file) or "").strip()
+            if not ts:
+                return create_initial_result()
+
+            json_path = f"{self.base_path}/{ts}_backup/{my_type}.json"
+            if not os.path.exists(json_path):
+                return create_initial_result(ts)
+            break
         ts = ts.strip()
         conf_data = json.loads(public.ReadFile(json_path))
-        log_data = public.ReadFile(log_file) if os.path.exists(log_file) else ""
+        log_data = read_log_data()
+
+        status_key_name = "backup_status" if my_type == "backup" else "restore_status"
+        if conf_data.get(status_key_name) == 1 and not conf_data.get("data_list"):
+            return create_initial_result(ts)
 
         # 定义备份类型及其处理逻辑
         types = [
@@ -1066,25 +1110,61 @@ class DataManager(SoftModule):
                 'type': 'site',
                 'data_key': 'site',
                 'display_name': 'site',
-                'progress': 30
+                'progress': 25
             },
             {
                 'type': 'database',
                 'data_key': 'database',
                 'display_name': 'database',
-                'progress': 70
+                'progress': 50
+            },
+            {
+                'type': 'ssl',
+                'data_key': 'ssl',
+                'display_name': 'ssl',
+                'progress': 60
             },
             {
                 'type': 'ftp',
                 'data_key': 'ftp',
                 'display_name': 'ftp',
-                'progress': 85
+                'progress': 65
+            },
+            {
+                'type': 'crontab',
+                'data_key': 'crontab',
+                'display_name': 'crontab',
+                'progress': 72
             },
             {
                 'type': 'ssh',
                 'data_key': 'ssh',
                 'display_name': 'ssh',
-                'progress': 85
+                'progress': 78
+            },
+            {
+                'type': 'firewall',
+                'data_key': 'firewall',
+                'display_name': 'firewall',
+                'progress': 82
+            },
+            {
+                'type': 'vmail',
+                'data_key': 'vmail',
+                'display_name': 'mail',
+                'progress': 86
+            },
+            {
+                'type': 'node',
+                'data_key': 'node',
+                'display_name': 'node',
+                'progress': 88
+            },
+            {
+                'type': 'plugin',
+                'data_key': 'plugin',
+                'display_name': 'plugin',
+                'progress': 90
             },
         ]
 
@@ -1093,27 +1173,41 @@ class DataManager(SoftModule):
         current_task_info = None
         status_key = "status" if my_type == "backup" else "restore_status"
 
+        def normalize_process_items(raw_items):
+            if isinstance(raw_items, list):
+                return raw_items
+            if isinstance(raw_items, dict):
+                if "ssl_list" in raw_items or "provider_list" in raw_items:
+                    return raw_items.get("ssl_list", []) + raw_items.get("provider_list", [])
+                if raw_items and all(isinstance(item, dict) for item in raw_items.values()):
+                    return list(raw_items.values())
+                return [raw_items] if raw_items else []
+            return []
+
         for index, process in enumerate(types):
-            items = conf_data.get("data_list", {}).get(process['data_key'], [])
+            items = normalize_process_items(conf_data.get("data_list", {}).get(process['data_key'], []))
             total = len(items)
             if total == 0:  # 认为已完成
                 last_progress = process['progress']
                 continue
 
-            done_count = len([x for x in items if isinstance(x, dict) and x.get(status_key) == 2])
+            done_count = len([
+                x for x in items
+                if isinstance(x, dict) and x.get(status_key, x.get("status")) == 2
+            ])
             rate = done_count / total
 
             progress_range = process['progress'] - (types[index - 1]['progress'] if index > 0 else 0)
             current_process = round(last_progress + progress_range * rate)
             if done_count < total:  # 如果有未完成项
                 for item in items:
-                    if isinstance(item, dict) and item.get(status_key) != 2:
+                    if isinstance(item, dict) and item.get(status_key, item.get("status")) != 2:
                         current_task_info = {
                             "task_type": my_type,
                             "task_status": 1,
                             "data_type": process['type'],
                             "name": item.get("name", f"unknow {process['display_name']}"),
-                            "data_backup_status": item.get("status", 0),
+                            "data_backup_status": item.get(status_key, item.get("status", 0)),
                             "progress": current_process if current_process > 5 else 5,
                             "msg": item.get("msg"),
                             'exec_log': log_data,
@@ -1126,13 +1220,12 @@ class DataManager(SoftModule):
 
         if current_task_info:
             # 正在处理的任务，更新其进度并返回
-            current_task_info['progress'] = current_process
+            current_task_info['progress'] = current_process if current_process > 5 else 5
             return public.ReturnMsg(True, current_task_info)
 
         # 检查数据打包进度
         try:
-            key = "backup_status" if my_type == "backup" else "restore_status"
-            backup_status = conf_data.get(key)
+            backup_status = conf_data.get(status_key_name)
             if backup_status == 1:
                 return public.ReturnMsg(True, {
                     "task_type": my_type,

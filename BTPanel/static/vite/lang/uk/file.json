@@ -452,7 +452,7 @@
 			"title": "Список обраного",
 			"path": "Шлях",
 			"removeFavoriteTitle": "Видалити з обраного",
-			"removeFavoriteMessage": "Видалити шлях [{path}]?",
+			"removeFavoriteMessage": "Видалити шлях [{name}]?",
 			"management": "Керування",
 			"cancelFavoriteTitle": "Скасувати обране",
 			"cancelFavoriteMessage": "Скасувати обране для [{name}], продовжити?"

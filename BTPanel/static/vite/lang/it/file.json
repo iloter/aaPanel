@@ -35,7 +35,7 @@
         "protection": "Protezione file/dir",
         "remarks": "Ps",
         "pathNotExists": "Il percorso non esiste",
-        "pathNotExistsConfirm": "Path [{Path}] non esiste, vuoi crearlo e navigare su di esso?",
+        "pathNotExistsConfirm": "Path [{path}] non esiste, vuoi crearlo e navigare su di esso?",
         "protectedStatus": "Protetto",
         "unprotectedStatus": "Non protetto",
         "uploadModal": {
@@ -246,10 +246,10 @@
             "afterTurningOnProtectionDir": "Dopo aver attivato la protezione, questa directory nega tutte le operazioni.",
             "afterTurningOffProtectionFile": "Dopo aver disattivato la protezione, tutte le operazioni sono consentite in questo file.",
             "afterTurningOnProtectionFile": "Dopo aver attivato la protezione, questo file nega tutte le operazioni.",
-            "turningOnProtectionFile": "Abilita la protezione del file corrente [{Path}]",
-            "turningOffProtectionFile": "Chiudi la protezione del file corrente [{Path}]",
-            "turningOnProtectionSuffix": "Abilita la protezione del suffisso [{suffisso}]",
-            "turningOffProtectionSuffix": "Chiudi la protezione del suffisso [{suffisso}]"
+            "turningOnProtectionFile": "Abilita la protezione del file corrente [{path}]",
+            "turningOffProtectionFile": "Chiudi la protezione del file corrente [{path}]",
+            "turningOnProtectionSuffix": "Abilita la protezione del suffisso [{suffix}]",
+            "turningOffProtectionSuffix": "Chiudi la protezione del suffisso [{suffix}]"
         },
         "deleteController": {
             "deleteSingleFileTitle": "Elimina file [{name}]",
@@ -411,7 +411,7 @@
             "shareChain": "Catena di azioni",
             "copyLinkAndCode": "Copia collegamento e codice",
             "cancelSharing": "Annulla la condivisione",
-            "confirmStopSharing": "Conferma di smettere di condividere [{fileName}], continuare?",
+            "confirmStopSharing": "Conferma di smettere di condividere [{filename}], continuare?",
             "deletingShare": "Eliminazione della condivisione, per favore aspetta ...",
             "linkAndCode": "Link: {link}, codice di invito: {code}",
             "securityTip": "Nota: I link di condivisione esterni possono comportare rischi. Condividi solo con persone fidate per evitare di esporre informazioni sensibili."
@@ -422,7 +422,7 @@
             "shareAddress": "Indirizzo di condivisione",
             "expirationDate": "Data di scadenza",
             "cancelShareTitle": "Annulla la condivisione",
-            "cancelShareMessage": "Conferma di smettere di condividere 【{fileName}】, continuare?",
+            "cancelShareMessage": "Conferma di smettere di condividere 【{filename}】, continuare?",
             "deletingShare": "Eliminazione del link a condivisione, per favore aspetta ...",
             "searchPlaceholder": "Inserisci il nome della condivisione"
         },
@@ -430,7 +430,7 @@
             "title": "Elenco preferito",
             "path": "Sentiero",
             "removeFavoriteTitle": "Rimuovi il preferito",
-            "removeFavoriteMessage": "Conferma eliminare il percorso [{path}]?",
+            "removeFavoriteMessage": "Conferma eliminare il percorso [{name}]?",
             "management": "Gestione",
             "cancelFavoriteTitle": "Annulla preferito",
             "cancelFavoriteMessage": "Annullare il preferito per [{name}], continuare?"

@@ -200,7 +200,7 @@
 			"index_74": "文件类型:txt/json 每行一个邮箱 不超过5 MB",
 			"index_75": "导入联系人",
 			"index_76": "更改列表",
-			"index_77": "您确定要从此邮箱 {0} {1} 吗？",
+			"index_77": "您确定要从此邮箱 {0} 吗？",
 			"index_78": "您确定要删除此 {0} 邮件吗？",
 			"index_79": "批量订阅",
 			"index_80": "请小心确认所选项 [订阅]",
@@ -522,6 +522,12 @@
 				"open": "打开",
 				"configurationParameters": "配置参数",
 				"active": "已启用",
+				"conflictTitle": "安装环境冲突",
+				"conflictAlertTitle": "检测到端口占用",
+				"conflictAlertDescription": "以下端口已被其他应用占用，请处理端口冲突后重试。",
+				"checkInstallFailed": "安装环境检测失败，请检查服务器环境后重试。",
+				"conflictOccupied": "已占用",
+				"conflictProcess": "进程",
 				"successTip": "安装后打开 BillionMail 控制台，完成域名、DNS 和发件人验证设置。"
 			}
 		}

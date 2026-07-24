@@ -313,7 +313,7 @@
 			"index_45": "Thương hiệu chứng chỉ",
 			"index_46": "(Các) miền chứng chỉ",
 			"index_47": "Hết hạn",
-			"index_48": "{ngày}, exp trong {ngày} ngày",
+			"index_48": "{date}, exp trong {days} ngày",
 			"index_49": "Lực https",
 			"index_50": "Khóa riêng (khóa)",
 			"index_51": "Giấy chứng nhận (CRT/PEM)",
@@ -807,7 +807,7 @@
 			"pullSuccess": "Kéo thành công",
 			"autoRestart": "Tự động khởi động lại",
 			"deployScriptRestartTip": "Sau khi triển khai tập lệnh này, dự án sẽ tự động khởi động lại",
-			"defaultDeployScript": "echo $(date)\ncd {0\ngit pull Origin {1\necho \"🚀 Ứng dụng đã được triển khai!\"\necho \"\"",
+			"defaultDeployScript": "echo $(date)\ncd {0}\ngit pull origin {1}\necho \"🚀 Ứng dụng đã được triển khai!\"\necho \"\"",
 			"deleteGitConfigTitle": "Xóa cấu hình git",
 			"deleteGitConfigContent": "Bạn có thể xóa kho lưu trữ ở đây. Lưu ý rằng cả thư mục .git và bản ghi triển khai sẽ bị xóa.",
 			"importDesc": "Việc nhập dự án Git chỉ liên kết kho lưu trữ. Các tập tin nguồn của bạn vẫn không thay đổi."

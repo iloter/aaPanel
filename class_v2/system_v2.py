@@ -55,16 +55,18 @@ class system:
                 data['php'].append(tmp)
 
         tmp = {}
-        data['webserver'] = ''
-        serviceName = 'nginx'
+        data['webserver'] = public.get_webserver()
+        serviceName = {
+            'nginx': 'nginx',
+            'apache': 'httpd',
+            'openlitespeed': 'openlitespeed',
+        }.get(data['webserver'], 'nginx')
         tmp['setup'] = False
         phpversion = "54"
         phpport = '888'
         pstatus = False
         pauth = False
-        if os.path.exists(self.setupPath+'/nginx'):
-            data['webserver'] = 'nginx'
-            serviceName = 'nginx'
+        if data['webserver'] == 'nginx':
             tmp['setup'] = os.path.exists(self.setupPath +'/nginx/sbin/nginx')
             configFile = self.setupPath + '/nginx/conf/nginx.conf'
             try:
@@ -86,9 +88,7 @@ class system:
             except:
                 pass
 
-        elif os.path.exists(self.setupPath+'/apache'):
-            data['webserver'] = 'apache'
-            serviceName = 'httpd'
+        elif data['webserver'] == 'apache':
             tmp['setup'] = os.path.exists(self.setupPath +'/apache/bin/httpd')
             configFile = self.setupPath + '/apache/conf/extra/httpd-vhosts.conf'
             try:
@@ -106,9 +106,7 @@ class system:
                     if conf.find(self.setupPath + '/stop') == -1: pstatus = True
             except:
                 pass
-        elif os.path.exists('/usr/local/lsws/bin/lswsctrl'):
-            data['webserver'] = 'openlitespeed'
-            serviceName = 'openlitespeed'
+        elif data['webserver'] == 'openlitespeed':
             tmp['setup'] = os.path.exists('/usr/local/lsws/bin/lswsctrl')
             configFile = '/usr/local/lsws/bin/lswsctrl'
             try:
@@ -130,7 +128,10 @@ class system:
 
 
         tmp['type'] = data['webserver']
-        tmp['version'] = public.xss_version(public.readFile(self.setupPath + '/'+data['webserver']+'/version.pl'))
+        version_file = self.setupPath + '/' + data['webserver'] + '/version.pl'
+        if data['webserver'] == 'openlitespeed':
+            version_file = '/usr/local/lsws/VERSION'
+        tmp['version'] = public.xss_version(public.readFile(version_file))
         tmp['status'] = False
         if serviceName=="nginx":
             mPID=public.readFile("/www/server/nginx/logs/nginx.pid")
@@ -695,7 +696,7 @@ class system:
         networkInfo['ftp_total'] = public.M('ftps').count()
         networkInfo['database_total'] = public.M('databases').count()
         networkInfo['system'] = self.GetSystemVersion()
-        networkInfo['simple_system'] = networkInfo['system'].split(' ')[0] + ' ' + re.search('\d+', networkInfo['system']).group()
+        networkInfo['simple_system'] = networkInfo['system'].split(' ')[0] + ' ' + re.search(r'\d+', networkInfo['system']).group()
         networkInfo['installed'] = self.CheckInstalled()
         import panel_ssl_v2 as panelSSL
         user_info = panelSSL.panelSSL().GetUserInfo(None)

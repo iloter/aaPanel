@@ -149,7 +149,7 @@
 			"index_1": "Thêm cấu hình, bấm để xem"
 		},
 		"Confirm": {
-			"manualInputVerification": "Vui lòng nhập \"{text}\" để xác nhận",
+			"manualInputVerification": "Vui lòng nhập \"{text_}\" để xác nhận",
 			"index_2": "Lỗi đầu vào, vui lòng thử lại",
 			"index_3": "{0} đã hoàn tất! Tổng số {1} mục, {2} thành công, {3} thất bại.",
 			"index_4": "Kết quả: ",

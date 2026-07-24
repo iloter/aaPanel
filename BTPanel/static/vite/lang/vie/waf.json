@@ -215,7 +215,7 @@
 				"index_95": "Vui lòng nhập địa chỉ hoặc tham số.",
 				"index_96": "Địa chỉ URI",
 				"index_97": "IP này đã yêu cầu cùng một url nhiều hơn {index_1} lần trong vòng {index_2} giây, kích hoạt bộ phận bảo vệ cc và chặn ip này cho {index_3} giây",
-				"index_98": "Xác minh khu vực: Vùng được chọn tự động bật chế độ xác minh: {index_1}, thời gian truy cập: {index_2} giây, nếu xác minh không thành công: {index_3} lần",
+				"index_98": "Xác minh khu vực: Vùng được chọn tự động bật chế độ xác minh: {index_1}, thời gian truy cập: {index_2} giây, nếu xác minh không thành công: {index_3} lần, chặn: {index_4} giây",
 				"index_99": "Toàn cầu",
 				"index_100": "Địa điểm",
 				"index_101": "Các yêu cầu độc hại tích lũy vượt quá {index_1} lần trong vòng {index_2} giây, bị chặn {index_3} giây",

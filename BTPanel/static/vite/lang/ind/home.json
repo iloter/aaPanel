@@ -101,6 +101,7 @@
     "systemRestartReminder": "Pengingat Mulai Ulang Sistem",
     "serverRestartedAt": "Server Anda dimulai ulang pada {time}.",
     "iKnow": "Aku tahu",
+    "memoEmpty": "Konten saat ini kosong, klik untuk mengedit",
     "Install": {
       "index_1_1": "Disarankan untuk menggunakan paket satu klik berikut, silakan pilih sesuai permintaan atau {soft_} pilih sendiri, disarankan untuk menginstal LEMP.",
       "index_1_2": "Toko perangkat lunak",
@@ -141,7 +142,7 @@
       "index_19": "Perbarui sekarang",
       "index_20": "Instruksi untuk penguji beta",
       "index_21": "Log Pembaruan Linux Beta",
-      "index_23_1": "Saya sudah memeriksa {title} {tunggu}",
+      "index_23_1": "Saya sudah memeriksa {title} {wait}",
       "index_23_2": "\"Instruksi untuk penguji beta\"",
       "index_23_3": "{0} detik menunggu untuk mengklik",
       "index_24": "Perbarui ke versi Linux Beta",
@@ -220,7 +221,7 @@
       "index_22": "Menangani file berbahaya",
       "index_23": "OSS scan",
       "index_24": "Aktifkan pemindaian direktori mount OSS",
-      "index_25": "Sakelar intersepsi otomatis",
+      "index_25": "Karantina File",
       "index_26": "Sakelar pembunuhan dinamis",
       "index_27": "Sistem saat ini tidak memasang direktori OSS, jadi pemindaian OSS tidak dapat diaktifkan",
       "index_28": "Aktifkan pembunuhan dinamis",
@@ -323,7 +324,7 @@
         "description": "Mari siapkan proyek pertama Anda dalam beberapa menit.",
         "softwarePage": "Halaman perangkat lunak",
         "lastConfig": "Última configuración: ",
-        "skipWizard": "Lewati panduan",
+        "skipWizard": "Lewati",
         "options": {
           "wordpress": {
             "title": "Buat situs WordPress",

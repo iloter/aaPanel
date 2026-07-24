@@ -149,7 +149,7 @@
 			"index_1": "Más configuración, haga clic para ver"
 		},
 		"Confirm": {
-			"manualInputVerification": "Por favor ingresa \"{text}\" para confirmar",
+			"manualInputVerification": "Por favor ingresa \"{text_}\" para confirmar",
 			"index_2": "Error de entrada, intente nuevamente",
 			"index_3": "{0} completado! Total de {1} elementos, {2} exitosos, {3} fallidos.",
 			"index_4": "Resultado: ",

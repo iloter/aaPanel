@@ -8,6 +8,7 @@
 # -------------------------------------------------------------------
 
 import hashlib
+import json
 import os
 import sys
 import time
@@ -27,6 +28,9 @@ warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 
 class BaseUtil:
+    INITIAL_TASK_PROGRESS = 5
+    INITIAL_TASK_STATE_MAX_AGE = 300
+
     def __init__(self):
         self.base_path = '/www/backup/backup_restore'
         if not os.path.exists(self.base_path):
@@ -42,6 +46,70 @@ class BaseUtil:
         log = "[{}] {}".format(time_str, log)
         log_file = self.base_path + '/{}.log'.format(type)
         public.writeFile(log_file, log + "\n", 'a+')
+
+    def get_initial_task_message(self) -> str:
+        return public.lang("Initializing task...")
+
+    def get_initial_task_state_file(self, task_type: str) -> str:
+        return os.path.join(self.base_path, "{}_init.json".format(task_type))
+
+    def write_initial_task_state(self, task_type: str, timestamp=None, reset_log: bool = False):
+        if task_type not in ("backup", "restore"):
+            return
+        if not os.path.exists(self.base_path):
+            public.ExecShell('mkdir -p {}'.format(self.base_path))
+
+        log_file = os.path.join(self.base_path, "{}.log".format(task_type))
+        if reset_log:
+            public.WriteFile(log_file, "")
+
+        message = self.get_initial_task_message()
+        self.print_log(message, task_type)
+        state_data = {
+            "timestamp": str(timestamp) if timestamp is not None else "",
+            "create_time": int(time.time()),
+            "progress": self.INITIAL_TASK_PROGRESS,
+            "msg": message,
+        }
+        public.WriteFile(self.get_initial_task_state_file(task_type), json.dumps(state_data))
+
+    def get_initial_task_state(self, task_type: str):
+        state_file = self.get_initial_task_state_file(task_type)
+        if not os.path.exists(state_file):
+            return None
+        try:
+            state_data = json.loads(public.ReadFile(state_file) or "{}")
+            create_time = int(state_data.get("create_time", 0))
+            if create_time and create_time + self.INITIAL_TASK_STATE_MAX_AGE < int(time.time()):
+                os.remove(state_file)
+                return None
+            return state_data
+        except:
+            return None
+
+    def clear_initial_task_state(self, task_type: str):
+        state_file = self.get_initial_task_state_file(task_type)
+        try:
+            if os.path.exists(state_file):
+                os.remove(state_file)
+        except:
+            pass
+
+    def build_initial_task_progress(self, task_type: str, timestamp=None, log_data=None):
+        message = self.get_initial_task_message()
+        if not log_data:
+            log_data = "[{}] {}\n".format(time.strftime('%Y-%m-%d %H:%M:%S'), message)
+        return {
+            "task_type": task_type,
+            "task_status": 1,
+            "data_type": "init",
+            "name": message,
+            "data_backup_status": 1,
+            "progress": self.INITIAL_TASK_PROGRESS,
+            "msg": message,
+            "exec_log": log_data,
+            "timestamp": timestamp,
+        }
 
     def replace_log(self, old_str: str, new_str: str, type: str):
         log_file = self.base_path + '/{}.log'.format(type)

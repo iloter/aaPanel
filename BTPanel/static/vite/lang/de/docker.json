@@ -514,7 +514,7 @@
 			"index_3": "Bitte geben Sie das Schlüsselwort ein",
 			"index_4": "Stapel löschen",
 			"index_5": "Batch -Löschen -Behälter komponieren",
-			"index_6": "Sie sind kurz davor, den ausgewählten Container komponieren zu stapeln. Willst du weitermachen?",
+			"index_6": "Sie sind dabei, {0} ausgewählte Container-Composes stapelweise zu löschen. Möchten Sie fortfahren?",
 			"index_7": "Löschen, bitte warten ...",
 			"index_8": "Löschen fehlgeschlagen",
 			"index_9": "Batch -Löschen abgeschlossen",

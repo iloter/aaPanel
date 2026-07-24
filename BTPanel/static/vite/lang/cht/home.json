@@ -101,6 +101,7 @@
     "systemRestartReminder": "系統重啟提醒",
     "serverRestartedAt": "您的服務器在 {time} 發生了重新啟動。",
     "iKnow": "我知道了",
+    "memoEmpty": "目前內容為空，點擊編輯",
     "SetupTabs": {
       "softwareInstall": "軟體安裝",
       "projectCreate": "項目創建",
@@ -225,7 +226,7 @@
       "index_22": "處理惡意文件",
       "index_23": "OSS掃描",
       "index_24": "啟用OSS掛載目錄的掃描",
-      "index_25": "自動攔截開關",
+      "index_25": "隔離文件",
       "index_26": "動態查殺開關",
       "index_27": "當前系統未掛載OSS目錄，因此無法啟用OSS掃描",
       "index_28": "啟用動態查殺",
@@ -328,7 +329,7 @@
         "description": "只需幾分鐘，即可完成第一個專案的設定。",
         "softwarePage": "軟體頁面",
         "lastConfig": "上次配置: ",
-        "skipWizard": "略過引導",
+        "skipWizard": "略過",
         "options": {
           "wordpress": {
             "title": "建立 WordPress 站點",

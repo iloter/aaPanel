@@ -101,6 +101,7 @@
     "systemRestartReminder": "System Restart Reminder",
     "serverRestartedAt": "Your server restarted at {time}.",
     "iKnow": "I Know",
+    "memoEmpty": "Current content is empty, click to edit",
     "SetupTabs": {
       "softwareInstall": "Software install",
       "projectCreate": "Project creation",
@@ -225,7 +226,7 @@
       "index_22": "Dealing with malicious files",
       "index_23": "OSS Scan",
       "index_24": "Enable scanning of OSS mount directories",
-      "index_25": "Automatic interception switch",
+      "index_25": "Quarantine Files",
       "index_26": "Dynamic Kill Switch",
       "index_27": "The current system does not mount the OSS directory, so OSS scanning cannot be enabled",
       "index_28": "Enable dynamic killing",
@@ -328,7 +329,7 @@
         "description": "Let's set up your first project in minutes.",
         "softwarePage": "Software page",
         "lastConfig": "Last deployed: ",
-        "skipWizard": "Skip wizard",
+        "skipWizard": "Skip",
         "options": {
           "wordpress": {
             "title": "Create WordPress site",

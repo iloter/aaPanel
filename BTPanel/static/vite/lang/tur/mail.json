@@ -522,6 +522,12 @@
 				"open": "Aç",
 				"configurationParameters": "Yapılandırma parametreleri",
 				"active": "Aktif",
+				"conflictTitle": "Kurulum ortamı çakışması",
+				"conflictAlertTitle": "Port çakışmaları algılandı",
+				"conflictAlertDescription": "Aşağıdaki portlar başka uygulamalar tarafından kullanılıyor. Port çakışmalarını giderip tekrar deneyin.",
+				"checkInstallFailed": "Kurulum ortamı kontrolü başarısız oldu. Sunucu ortamını kontrol edip tekrar deneyin.",
+				"conflictOccupied": "Kullanımda",
+				"conflictProcess": "İşlem",
 				"successTip": "Kurulumdan sonra BillionMail konsolunu açın ve alan adı, DNS ve gönderen doğrulama ayarlarını tamamlayın."
 			}
 		}

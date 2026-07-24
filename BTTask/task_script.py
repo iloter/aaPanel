@@ -122,14 +122,14 @@ def update_monitor_requests():
     dataObject.getSiteThirtyTotal(get=None)
     del dataObject
 
-
-@task()
-def malicious_file_scanning():
-    from projectModelV2 import safecloudModel
-    safecloud = safecloudModel.main()
-    # 调用 webshell_detection 函数
-    safecloud.webshell_detection({'is_task': 'true'})
-    del safecloud
+# todo 弃用 改手动执行
+# @task()
+# def malicious_file_scanning():
+#     from projectModelV2 import safecloudModel
+#     safecloud = safecloudModel.main()
+#     # 调用 webshell_detection 函数
+#     safecloud.webshell_detection({'is_task': 'true'})
+#     del safecloud
 
 
 @task()

@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import warnings
+import ast
 
 if "/www/server/panel/class" not in sys.path:
     sys.path.insert(0, "/www/server/panel/class")
@@ -24,9 +25,83 @@ warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 
 class ConfigManager:
+    DEFAULT_BACKUP_DATA = [
+        "soft", "site", "wp_tools", "ssl", "database", "ftp",
+        "crontab", "vmail", "firewall", "plugin"
+    ]
+    SUPPORTED_BACKUP_DATA = set(DEFAULT_BACKUP_DATA + ["ssh", "node"])
+
     def __init__(self):
         self.base_path = '/www/backup/backup_restore'
         self.bakcup_task_json = self.base_path + '/backup_task.json'
+
+    @staticmethod
+    def _parse_list_value(value, default=None):
+        if value is None:
+            return list(default) if isinstance(default, list) else default
+        if isinstance(value, list):
+            return value
+        if isinstance(value, tuple) or isinstance(value, set):
+            return list(value)
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+            for parser in (json.loads, ast.literal_eval):
+                try:
+                    result = parser(value)
+                    if isinstance(result, (list, tuple, set)):
+                        return list(result)
+                    return [result]
+                except:
+                    pass
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return [value]
+
+    def normalize_backup_data(self, value=None):
+        data = self._parse_list_value(value, self.DEFAULT_BACKUP_DATA)
+        if data is None:
+            data = list(self.DEFAULT_BACKUP_DATA)
+        if not data:
+            return []
+        normalized = []
+        for item in data:
+            key = str(item).strip()
+            if not key:
+                continue
+            key = key.lower()
+            if key == "all":
+                return list(self.DEFAULT_BACKUP_DATA)
+            if key in self.SUPPORTED_BACKUP_DATA and key not in normalized:
+                normalized.append(key)
+        return normalized
+
+    def normalize_backup_id_list(self, value=None, default_all=True):
+        default = ["ALL"] if default_all else []
+        data = self._parse_list_value(value, default)
+        if data is None:
+            data = default
+        result = []
+        for item in data:
+            if item is None:
+                continue
+            if isinstance(item, str):
+                text = item.strip()
+                if not text:
+                    continue
+                if text.upper() == "ALL":
+                    return ["ALL"]
+                try:
+                    item = int(text)
+                except:
+                    item = text
+            result.append(item)
+        return result
+
+    @staticmethod
+    def backup_type_enabled(backup_data, *types):
+        enabled = set(str(item).lower() for item in backup_data)
+        return any(str(item).lower() in enabled for item in types)
 
     def get_backup_conf(self, timestamp):
         if not os.path.exists(self.bakcup_task_json):

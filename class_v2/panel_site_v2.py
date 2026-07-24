@@ -71,6 +71,153 @@ class panelSite(panelRedirect):
         except PermissionError as e:
             public.WriteLog('Access to Information', "{} err: {}".format(self.conf_dir, str(e)))
 
+    def _build_wp_overview(self, site_id=None):
+        try:
+            site_id = int(site_id or 0)
+        except:
+            site_id = 0
+
+        if site_id <= 0:
+            return {}
+
+        try:
+            site_info = public.M('sites').where('id=?', (site_id,)).field('id,name,path,parent_id').find()
+            if not isinstance(site_info, dict) or not site_info:
+                return {}
+
+            parent_id = int(site_info.get('parent_id') or 0)
+            query_id = parent_id if parent_id > 0 else site_id
+
+            first_domain = ''
+            domain_list = public.M('domain').where('pid=?', (query_id,)).field('name,port').order('id asc').select()
+            if isinstance(domain_list, list):
+                for domain_info in domain_list:
+                    domain_name = str(domain_info.get('name', '')).strip()
+                    domain_port = str(domain_info.get('port', '')).strip()
+                    if domain_name and '*' not in domain_name and domain_port in ('80', '443'):
+                        first_domain = domain_name
+                        break
+                if not first_domain and domain_list:
+                    first_domain = str(domain_list[0].get('name', '')).strip()
+
+            if not first_domain:
+                first_domain = str(site_info.get('name', '')).split('/')[0].strip()
+
+            site_domain = first_domain
+            if parent_id > 0:
+                parent_info = public.M('sites').where('id=?', (parent_id,)).field('path').find()
+                parent_path = str(parent_info.get('path', '')).strip('/') if isinstance(parent_info, dict) else ''
+                child_path = str(site_info.get('path', '')).strip('/')
+                sub_path = child_path.replace(parent_path, '', 1).strip('/') if parent_path else ''
+                if sub_path:
+                    site_domain = '{}/{}'.format(first_domain.rstrip('/'), sub_path)
+            elif '/' in str(site_info.get('name', '')):
+                site_domain = str(site_info.get('name', '')).strip()
+
+            protocol = 'http'
+            try:
+                from data_v2 import data
+                if data().get_site_ssl_info(first_domain) != -1:
+                    protocol = 'https'
+            except:
+                pass
+
+            site_url = '{}://{}'.format(protocol, site_domain.strip('/'))
+            wp_info = public.M('wordpress_onekey').where('s_id=?', (site_id,)).field('user,pass,d_id,prefix').find()
+            wp_info = wp_info if isinstance(wp_info, dict) else {}
+
+            username = str(wp_info.get('user', '') or '')
+            password = str(wp_info.get('pass', '') or '')
+            admin_url = '{}/wp-admin'.format(site_url.rstrip('/'))
+
+            return {
+                'site_id': site_id,
+                'site_name': site_info.get('name', ''),
+                'site_path': site_info.get('path', ''),
+                'site_url': site_url,
+                'login_url': admin_url,
+                'username': username,
+                'password': password,
+            }
+        except:
+            public.print_log('[wp_overview] build failed: {}'.format(public.get_error_info()))
+            return {}
+
+    def _fill_wp_progress_overview(self, progress, args=None):
+        if not isinstance(progress, dict):
+            return progress
+
+        try:
+            finished = int(progress.get('status', 0)) == 1
+        except:
+            finished = str(progress.get('status', '')) == '1'
+
+        if not finished:
+            return progress
+
+        if isinstance(progress.get('Create_website'), dict):
+            return progress
+
+        overview = progress.get('wp_overview')
+        site_id = 0
+        if isinstance(overview, dict):
+            try:
+                site_id = int(overview.get('site_id') or 0)
+            except:
+                site_id = 0
+        if site_id <= 0:
+            for key in ('site_id', 'siteId', 's_id', 'id'):
+                try:
+                    site_id = int(progress.get(key, 0) or 0)
+                except:
+                    site_id = 0
+                if site_id > 0:
+                    break
+
+        if site_id <= 0 and args is not None:
+            for key in ('site_id', 's_id', 'id'):
+                try:
+                    site_id = int(args.get(key, 0) or 0)
+                except:
+                    site_id = 0
+                if site_id > 0:
+                    break
+
+        if site_id <= 0:
+            for key in ('site_name', 'domain', 'name'):
+                site_name = str(progress.get(key, '') or '').strip()
+                if not site_name:
+                    continue
+                site_info = public.M('sites').where('name=?', (site_name,)).field('id').find()
+                if isinstance(site_info, dict) and site_info.get('id'):
+                    try:
+                        site_id = int(site_info['id'])
+                    except:
+                        site_id = 0
+                    break
+
+        if site_id <= 0:
+            wp_info = public.M('wordpress_onekey').field('s_id').order('id desc').find()
+            if isinstance(wp_info, dict) and wp_info.get('s_id'):
+                try:
+                    site_id = int(wp_info['s_id'])
+                except:
+                    site_id = 0
+
+        if site_id <= 0:
+            site_info = public.M('sites').where('project_type=?', ('WP2',)).field('id').order('id desc').find()
+            if isinstance(site_info, dict) and site_info.get('id'):
+                try:
+                    site_id = int(site_info['id'])
+                except:
+                    site_id = 0
+
+        if site_id > 0:
+            overview = self._build_wp_overview(site_id)
+            if overview:
+                progress['wp_overview'] = overview
+        return progress
+
     # 默认配置文件
     def check_default(self):
         nginx = self.setupPath + '/panel/vhost/nginx'
@@ -1415,8 +1562,14 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
         task_status = os.path.join('/tmp', 'wp_aapanel_deploy.log')
         lock_file = os.path.join('/tmp', 'wp_aapanel_deploy.lock')
 
+        try:
+            progress_site_name = json.loads(get.get('webname', '{}')).get('domain', '')
+        except:
+            progress_site_name = get.get('domain', '') or get.get('ps', '')
+
         progress_log = {
             "status": 0,
+            "site_name": progress_site_name,
             "parameter_verification": {
                 "ps": public.lang("Verification is underway....."),
                 "status": 0, "error": '',
@@ -1891,6 +2044,7 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
                         return {"ssl_site_id": get.pid or 0}
                     _apply_ssl()
 
+                progress_log['wp_overview'] = self._build_wp_overview(data.get('siteId', 0))
                 public.writeFile(task_status, json.dumps(progress_log))
                 public.set_module_logs("WP", "create", 1)
                 if is_subdir:
@@ -1931,6 +2085,8 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
             "message": {"siteId": site_id}
         }
         progress_log = json.loads(public.readFile(task_status))
+        if not progress_log.get('site_name'):
+            progress_log['site_name'] = site_name
         try:
             progress_log['parameter_verification']['ps'] = public.lang('Parameter verification successful')
             progress_log['parameter_verification']['status'] = 1
@@ -2024,6 +2180,7 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
             progress_log['initialize_wp_website']['ps'] = public.lang('Success')
             progress_log['initialize_wp_website']['status'] = 1
             progress_log['status'] = 1
+            progress_log['wp_overview'] = self._build_wp_overview(site_id)
             public.writeFile(task_status, json.dumps(progress_log))
 
             # 释放锁
@@ -3705,22 +3862,32 @@ listener SSL443 {{
                 try:
                     if public.get_multi_webservice_status() and site_info['project_type'] in ['PHP','WP2']:
                         # 2.6以上添加修补补丁
-                        old_str = 'http://127.0.0.1:8288'
-                        new_str = 'https://127.0.0.1:8290'
                         apache_version = "/www/server/apache/bin/httpd -v|grep version|awk '{print $3}'|cut -f2 -d'/'"
                         ver = public.ExecShell(apache_version)[0].strip()
                         ver = ver if ver else '0'
+                        ssl_enabled = (
+                            re.search(r"^\s*listen\s+[^;]*\bssl\b", ng_conf, re.M)
+                            or re.search(r"^\s*ssl_certificate\s+", ng_conf, re.M)
+                        )
+                        proxy_pat = re.compile(
+                            r"proxy_pass\s+https?://127\.0\.0\.1:(8288|8290);[ \t]*"
+                            r"(\r?\n[ \t]*proxy_ssl_server_name\s+on;[ \t]*)?"
+                            r"(\r?\n[ \t]*proxy_ssl_name\s+\$host;[ \t]*)?"
+                            r"(\r?\n[ \t]*proxy_ssl_session_reuse\s+off;[ \t]*)?"
+                        )
                         from packaging import version
-                        if version.parse(ver) >= version.parse("2.4.62"):
+                        if ssl_enabled and version.parse(ver) >= version.parse("2.4.62"):
                             patch_str = (
-                                "https://127.0.0.1:8290;\n"
-                                "\t\tproxy_ssl_server_name on;\n"
-                                "\t\tproxy_ssl_name $host;\n"
-                                "\t\tproxy_ssl_session_reuse off"
+                                "proxy_pass https://127.0.0.1:8290;\n"
+                                "\t\t\t\tproxy_ssl_server_name on;\n"
+                                "\t\t\t\tproxy_ssl_name $host;\n"
+                                "\t\t\t\tproxy_ssl_session_reuse off;"
                             )
-                            ng_conf = ng_conf.replace(old_str, patch_str)
+                        elif ssl_enabled:
+                            patch_str = "proxy_pass https://127.0.0.1:8290;"
                         else:
-                            ng_conf = ng_conf.replace(old_str, new_str)
+                            patch_str = "proxy_pass http://127.0.0.1:8288;"
+                        ng_conf = proxy_pat.sub(patch_str, ng_conf)
                 except:
                     pass
                 # 覆盖配置
@@ -11740,6 +11907,8 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
             # 线程存在且正常，读取并返回进度信息
             with open(task_status, 'r') as f:
                 res = json.loads(f.read())
+                if args.get('progress_type', '') == 'backup_deploy':
+                    res = self._fill_wp_progress_overview(res, args)
                 return public.success_v2(res)
         except Exception as e:
             raise public.HintException('Failed to retrieve replication progress:' + str(e))
@@ -14057,9 +14226,26 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
             listen_port = '8188'
 
         # 申请证书后切换代理头
+        ssl_conf = res.get('ssl', '').strip()
+        has_ssl = bool(ssl_conf) and ssl_conf != '#error_page 404/404.html;'
         proxy_host = f'http://127.0.0.1:{listen_port}'
-        if res['ssl'] != '#error_page 404/404.html;':
+        if has_ssl:
             proxy_host = f'https://127.0.0.1:{ssl_port}'
+
+        proxy_ssl_config = ''
+        if has_ssl and service_type == 'apache':
+            try:
+                apache_version = "/www/server/apache/bin/httpd -v|grep version|awk '{print $3}'|cut -f2 -d'/'"
+                ver = public.ExecShell(apache_version)[0].strip() or '0'
+                from packaging import version
+                if version.parse(ver) >= version.parse("2.4.62"):
+                    proxy_ssl_config = (
+                        "        proxy_ssl_server_name on;\n"
+                        "        proxy_ssl_name $host;\n"
+                        "        proxy_ssl_session_reuse off;\n"
+                    )
+            except:
+                pass
 
         new_block = r"""server 
 {{
@@ -14096,7 +14282,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
 
     location / {{
         proxy_pass {proxy_host};
-
+{proxy_ssl_config}
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -14135,7 +14321,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
     {Monitor}
 }} """.format(server_name=res['server_name'], include_php=res['include_php'],
           rert_apply_check=res['rert_apply_check'],
-          proxy_host=proxy_host, ssl_port=ssl_port, ssl=res['ssl'], Monitor=res['Monitor'],
+          proxy_host=proxy_host, proxy_ssl_config=proxy_ssl_config, ssl_port=ssl_port, ssl=res['ssl'], Monitor=res['Monitor'],
           begin_deny=res['begin_deny'],
           site_name=site_name, site_path=site_path, listen=res['listen'], _log=log_path,
           default_document=res['default_document'],
@@ -15032,3 +15218,21 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FOR
         )
         return public.success_v2("Delete success")
     # ======================= 网站分类设置 end =========================
+
+    # ======================= PHP网站克隆 star =========================
+    def clone_php_site(self, args: public.dict_obj):
+        """
+        克隆php网站
+        """
+        from php_site_clone_v2 import PHPSiteCloneService
+        return PHPSiteCloneService(self).start(args)
+
+    def get_php_clone_progress(self, args: public.dict_obj):
+        """
+        获取克隆进度
+        """
+        from php_site_clone_v2 import PHPSiteCloneService
+        return PHPSiteCloneService(self).get_progress(args)
+
+    # ======================= PHP网站克隆 end =========================
+

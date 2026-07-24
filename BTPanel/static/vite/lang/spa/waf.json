@@ -379,7 +379,7 @@
 			"index_79": "¿Tiras toda la sección IP?",
 			"index_80": "Después de sumarse a la lista blanca de URL, esta URL ya no se defenderá. ¿Quieres continuar la operación? ",
 			"index_81": "¿Quieres agregar una lista blanca de parámetros URI?",
-			"index_82": "¿Quieres agregar {IP} a la lista negra IP?"
+			"index_82": "¿Quieres agregar {ip} a la lista negra IP?"
 		},
 		"Rules": {
 			"index_1": "IP Whitelist",

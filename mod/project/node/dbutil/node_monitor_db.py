@@ -198,6 +198,104 @@ TABLE_SCHEMAS = {
             ("idx_node_monitor_snapshot_ts", False, ("ts",)),
         ],
     },
+    # 节点告警设置 通用设置 告警通道 告警最小间隔 允许告警时间范围
+    "node_alert_setting": {
+        "columns": [
+            ("id", "INTEGER PRIMARY KEY AUTOINCREMENT"),
+            ("node_id", "INTEGER NOT NULL DEFAULT 0"),
+            ("sender_ids", "TEXT NOT NULL DEFAULT '[]'"),
+            ("send_interval_enabled", "INTEGER NOT NULL DEFAULT 1"),
+            ("send_interval", "INTEGER NOT NULL DEFAULT 1800"),
+            ("time_range_enabled", "INTEGER NOT NULL DEFAULT 0"),
+            ("time_range_start", "INTEGER NOT NULL DEFAULT 0"),
+            ("time_range_end", "INTEGER NOT NULL DEFAULT 86400"),
+            ("created_at", "INTEGER NOT NULL DEFAULT 0"),
+            ("updated_at", "INTEGER NOT NULL DEFAULT 0"),
+        ],
+        "indexes": [
+            ("idx_node_alert_setting_node", True, ("node_id",)),
+        ],
+    },
+
+    # 固定监控项配置 每个节点或全局(node_id=0) 每个metric监控指标 一条
+    # target_key：磁盘路径或网卡名. CPU/内存/离线/到期为空
+    # duration_minutes：持续多少分钟触发
+    # threshold 阈值 xx   超过xx%  xxMB/s   xxGB xxMB
+    # threshold_unit  %  MB/s  GB
+
+    "node_alert_item": {
+        "columns": [
+            ("id", "INTEGER PRIMARY KEY AUTOINCREMENT"),
+            ("node_id", "INTEGER NOT NULL DEFAULT 0"),
+            ("metric", "TEXT NOT NULL"),
+            ("enabled", "INTEGER NOT NULL DEFAULT 0"),
+            ("operator", "TEXT NOT NULL DEFAULT '>='"),
+            ("threshold", "REAL NOT NULL DEFAULT 0"),
+            ("threshold_unit", "TEXT NOT NULL DEFAULT ''"),
+            ("duration_minutes", "INTEGER NOT NULL DEFAULT 1"),
+            ("target_key", "TEXT NOT NULL DEFAULT ''"),
+            ("target_name", "TEXT NOT NULL DEFAULT ''"),
+            ("created_at", "INTEGER NOT NULL DEFAULT 0"),
+            ("updated_at", "INTEGER NOT NULL DEFAULT 0"),
+        ],
+        "indexes": [
+            ("idx_node_alert_item_unique", True, ("node_id", "metric", "target_key")),
+            ("idx_node_alert_item_node", False, ("node_id",)),
+            ("idx_node_alert_item_enabled", False, ("enabled",)),
+        ],
+    },
+
+    # 保存当前告警状态 避免重复发送
+    # status：normal / alert。
+    # first_trigger_at：用于持续时间判断
+    # last_sent_at：用于最小发送间隔
+    # send_count：告警次数  后续可做次数限制
+    "node_alert_state": {
+        "columns": [
+            ("id", "INTEGER PRIMARY KEY AUTOINCREMENT"),
+            ("node_id", "INTEGER NOT NULL"),
+            ("item_id", "INTEGER NOT NULL DEFAULT 0"),
+            ("metric", "TEXT NOT NULL DEFAULT ''"),
+            ("target_key", "TEXT NOT NULL DEFAULT ''"),
+            ("status", "TEXT NOT NULL DEFAULT 'normal'"),
+            ("last_value", "REAL NOT NULL DEFAULT 0"),
+            ("last_message", "TEXT NOT NULL DEFAULT ''"),
+            ("first_trigger_at", "INTEGER NOT NULL DEFAULT 0"),
+            ("last_checked_at", "INTEGER NOT NULL DEFAULT 0"),
+            ("last_sent_at", "INTEGER NOT NULL DEFAULT 0"),
+            ("send_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("updated_at", "INTEGER NOT NULL DEFAULT 0"),
+        ],
+        "indexes": [
+            ("idx_node_alert_state_node_metric_target", True, ("node_id", "metric", "target_key")),
+            ("idx_node_alert_state_v2_node", False, ("node_id",)),
+            ("idx_node_alert_state_v2_status", False, ("status",)),
+        ],
+    },
+    # 告警历史
+    "node_alert_history": {
+        "columns": [
+            ("id", "INTEGER PRIMARY KEY AUTOINCREMENT"),
+            ("node_id", "INTEGER NOT NULL"),
+            ("item_id", "INTEGER NOT NULL DEFAULT 0"),
+            ("metric", "TEXT NOT NULL DEFAULT ''"),
+            ("target_key", "TEXT NOT NULL DEFAULT ''"),
+            ("trigger_value", "REAL NOT NULL DEFAULT 0"),
+            ("operator", "TEXT NOT NULL DEFAULT ''"),
+            ("threshold", "REAL NOT NULL DEFAULT 0"),
+            ("threshold_unit", "TEXT NOT NULL DEFAULT ''"),
+            ("action", "TEXT NOT NULL DEFAULT ''"),
+            ("message", "TEXT NOT NULL DEFAULT ''"),
+            ("sender_ids", "TEXT NOT NULL DEFAULT '[]'"),
+            ("send_result", "TEXT NOT NULL DEFAULT '{}'"),
+            ("created_at", "INTEGER NOT NULL DEFAULT 0"),
+        ],
+        "indexes": [
+            ("idx_node_alert_history_v2_node_time", False, ("node_id", "created_at")),
+            ("idx_node_alert_history_v2_metric_time", False, ("metric", "created_at")),
+            ("idx_node_alert_history_v2_time", False, ("created_at",)),
+        ],
+    },
 }
 
 
@@ -238,6 +336,42 @@ class NodeMonitorDB:
         col_sql = ", ".join("`{}`".format(item) for item in columns)
         return "CREATE {}INDEX IF NOT EXISTS `{}` ON `{}` ({});".format(unique_sql, index_name, table_name, col_sql)
 
+    @staticmethod
+    def _sqlite_table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+        row = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,),
+        ).fetchone()
+        return bool(row)
+
+    @staticmethod
+    def _sqlite_columns(conn: sqlite3.Connection, table_name: str) -> List[str]:
+        if not NodeMonitorDB._sqlite_table_exists(conn, table_name):
+            return []
+        return [row[1] for row in conn.execute("PRAGMA table_info(`{}`)".format(table_name)).fetchall()]
+
+    @staticmethod
+    def _archive_sqlite_table(conn: sqlite3.Connection, table_name: str, suffix: int) -> None:
+        if not NodeMonitorDB._sqlite_table_exists(conn, table_name):
+            return
+        new_name = "{}_legacy_{}".format(table_name, suffix)
+        while NodeMonitorDB._sqlite_table_exists(conn, new_name):
+            suffix += 1
+            new_name = "{}_legacy_{}".format(table_name, suffix)
+        conn.execute("ALTER TABLE `{}` RENAME TO `{}`".format(table_name, new_name))
+
+    @staticmethod
+    def _archive_legacy_alert_tables(conn: sqlite3.Connection) -> None:
+        suffix = int(time.time())
+        if NodeMonitorDB._sqlite_table_exists(conn, "node_alert_rule"):
+            NodeMonitorDB._archive_sqlite_table(conn, "node_alert_rule", suffix)
+        state_columns = NodeMonitorDB._sqlite_columns(conn, "node_alert_state")
+        if "rule_id" in state_columns:
+            NodeMonitorDB._archive_sqlite_table(conn, "node_alert_state", suffix)
+        history_columns = NodeMonitorDB._sqlite_columns(conn, "node_alert_history")
+        if "rule_id" in history_columns or "value" in history_columns:
+            NodeMonitorDB._archive_sqlite_table(conn, "node_alert_history", suffix)
+
     # 初始化数据库 支持新增字段(在表定义中添加
     def init_db(self):
         db_dir = os.path.dirname(self._DB_FILE)
@@ -253,6 +387,8 @@ class NodeMonitorDB:
                 conn.execute("PRAGMA journal_mode=WAL;")
             except Exception:
                 pass
+            # 不用兼容旧数据
+            # self._archive_legacy_alert_tables(conn)
             cur = conn.cursor()
             for table_name in TABLE_SCHEMAS:
                 cur.execute(self._create_table_sql(table_name))
@@ -893,6 +1029,355 @@ class NodeMonitorDB:
             "expired": expired,
             "is_soon": is_soon,
         }
+
+    def get_alert_setting(self, node_id: int, create: bool = True) -> Dict[str, Any]:
+        node_id = max(_to_int(node_id), 0)
+        row = self.table("node_alert_setting").where("node_id=?", (node_id,)).find()
+        if isinstance(row, dict) and row:
+            return self._decode_alert_setting(row)
+        if not create:
+            return {}
+        now = int(time.time())
+        row = self._default_alert_setting_row(node_id)
+        row.update({"created_at": now, "updated_at": now})
+        self.table("node_alert_setting").insert({
+            "node_id": row["node_id"],
+            "sender_ids": _json_dumps(row["sender_ids"]),
+            "send_interval_enabled": row["send_interval_enabled"],
+            "send_interval": row["send_interval"],
+            "time_range_enabled": row["time_range_enabled"],
+            "time_range_start": row["time_range_start"],
+            "time_range_end": row["time_range_end"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        })
+        data = self.table("node_alert_setting").where("node_id=?", (node_id,)).find()
+        return self._decode_alert_setting(data) if isinstance(data, dict) and data else row
+
+    def save_alert_setting(self, node_id: int, data: Dict[str, Any]) -> str:
+        node_id = max(_to_int(node_id), 0)
+        row, err = self._normalize_alert_setting_data(data)
+        if err:
+            return err
+        if not row:
+            return ""
+        now = int(time.time())
+        row["updated_at"] = now
+        try:
+            old = self.get_alert_setting(node_id, create=False)
+            if old:
+                self.table("node_alert_setting").where("node_id=?", (node_id,)).update(row)
+            else:
+                default_row = self._default_alert_setting_row(node_id)
+                insert_row = {
+                    "node_id": node_id,
+                    "sender_ids": _json_dumps(default_row["sender_ids"]),
+                    "send_interval_enabled": default_row["send_interval_enabled"],
+                    "send_interval": default_row["send_interval"],
+                    "time_range_enabled": default_row["time_range_enabled"],
+                    "time_range_start": default_row["time_range_start"],
+                    "time_range_end": default_row["time_range_end"],
+                    "created_at": now,
+                    "updated_at": now,
+                }
+                insert_row.update(row)
+                self.table("node_alert_setting").insert(insert_row)
+        except Exception as e:
+            return str(e)
+        return ""
+
+    @staticmethod
+    def _default_alert_setting_row(node_id: int) -> Dict[str, Any]:
+        return {
+            "id": 0,
+            "node_id": max(_to_int(node_id), 0),
+            "sender_ids": [],
+            "send_interval_enabled": 1,
+            "send_interval": 1800,
+            "time_range_enabled": 0,
+            "time_range_start": 0,
+            "time_range_end": 86400,
+            "created_at": 0,
+            "updated_at": 0,
+            "scope": "global" if max(_to_int(node_id), 0) == 0 else "node",
+        }
+
+    @staticmethod
+    def _decode_alert_setting(row: Dict[str, Any]) -> Dict[str, Any]:
+        row = dict(row)
+        row["sender_ids"] = NodeMonitorDB._normalize_sender_ids(row.get("sender_ids", []))
+        row["scope"] = "global" if _to_int(row.get("node_id", 0)) == 0 else "node"
+        return row
+
+    @staticmethod
+    def _normalize_sender_ids(value: Any) -> List[str]:
+        if isinstance(value, str):
+            value = _json_loads(value, [])
+        if not isinstance(value, list):
+            return []
+        result = []
+        seen = set()
+        for item in value:
+            sender_id = str(item).strip()
+            if not sender_id or sender_id in seen:
+                continue
+            seen.add(sender_id)
+            result.append(sender_id)
+        return result
+
+    @staticmethod
+    def _normalize_alert_setting_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        row = {}
+        if "sender_ids" in data:
+            row["sender_ids"] = _json_dumps(NodeMonitorDB._normalize_sender_ids(data.get("sender_ids")))
+        if "send_interval_enabled" in data:
+            row["send_interval_enabled"] = 1 if _to_int(data.get("send_interval_enabled")) else 0
+        if "send_interval" in data:
+            row["send_interval"] = max(_to_int(data.get("send_interval"), 1800), 60)
+        if "time_range_enabled" in data:
+            row["time_range_enabled"] = 1 if _to_int(data.get("time_range_enabled")) else 0
+        has_start = "time_range_start" in data
+        has_end = "time_range_end" in data
+        if has_start:
+            row["time_range_start"] = _to_int(data.get("time_range_start"), 0)
+        if has_end:
+            row["time_range_end"] = _to_int(data.get("time_range_end"), 86400)
+        start = row.get("time_range_start", _to_int(data.get("time_range_start", 0)))
+        end = row.get("time_range_end", _to_int(data.get("time_range_end", 86400)))
+        if has_start or has_end:
+            if not (0 <= start <= 86400 and 0 <= end <= 86400):
+                return {}, "time range format error"
+            if _to_int(data.get("time_range_enabled", row.get("time_range_enabled", 0))) and start == end:
+                return {}, "time range format error"
+        return row, ""
+
+    def get_alert_items(self, node_id: int = -1, include_global: bool = False, enabled_only: bool = False) -> List[Dict[str, Any]]:
+        where = []
+        params = []
+        node_id = _to_int(node_id, -1)
+        if node_id >= 0:
+            if include_global and node_id > 0:
+                where.append("(node_id=0 OR node_id=?)")
+                params.append(node_id)
+            else:
+                where.append("node_id=?")
+                params.append(node_id)
+        if enabled_only:
+            where.append("enabled=1")
+        query = self.table("node_alert_item")
+        if where:
+            query = query.where(" AND ".join(where), tuple(params))
+        data = query.order("node_id", "ASC").order("metric", "ASC").order("target_key", "ASC").order("id", "ASC").select()
+        if not isinstance(data, list):
+            return []
+        return [self._decode_alert_item(item) for item in data if isinstance(item, dict)]
+
+    def get_alert_item(self, item_id: int) -> Dict[str, Any]:
+        row = self.table("node_alert_item").where("id=?", (_to_int(item_id),)).find()
+        if not isinstance(row, dict) or not row:
+            return {}
+        return self._decode_alert_item(row)
+
+    def save_alert_item(self, data: Dict[str, Any]) -> Tuple[int, str]:
+        row, err = self._normalize_alert_item_data(data)
+        if err:
+            return 0, err
+        item_id = _to_int(data.get("id", data.get("item_id", 0)))
+        now = int(time.time())
+        row["updated_at"] = now
+        try:
+            if item_id:
+                old = self.get_alert_item(item_id)
+                if not old:
+                    return 0, "Alert item does not exist"
+                self.table("node_alert_item").where("id=?", (item_id,)).update(row)
+                return item_id, ""
+            old = self.table("node_alert_item").where(
+                "node_id=? AND metric=? AND target_key=?",
+                (row["node_id"], row["metric"], row["target_key"]),
+            ).find()
+            if isinstance(old, dict) and old:
+                self.table("node_alert_item").where("id=?", (old["id"],)).update(row)
+                return _to_int(old.get("id")), ""
+            row["created_at"] = now
+            new_id = self.table("node_alert_item").insert(row)
+            return _to_int(new_id, 0), "" if not isinstance(new_id, str) else new_id
+        except Exception as e:
+            return 0, str(e)
+
+    def save_alert_items(self, node_id: int, items: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], str]:
+        node_id = max(_to_int(node_id), 0)
+        if not isinstance(items, list):
+            return [], "items format error"
+        result = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            data = dict(item)
+            data["node_id"] = node_id
+            item_id, err = self.save_alert_item(data)
+            if err:
+                return result, err
+            result.append(self.get_alert_item(item_id))
+        return result, ""
+
+    def set_alert_item_status(self, item_id: int, enabled: int) -> str:
+        item_id = _to_int(item_id)
+        if item_id <= 0:
+            return "item_id cannot be empty"
+        try:
+            self.table("node_alert_item").where("id=?", (item_id,)).update({
+                "enabled": 1 if _to_int(enabled) else 0,
+                "updated_at": int(time.time()),
+            })
+        except Exception as e:
+            return str(e)
+        return ""
+
+    def delete_alert_item(self, item_id: int) -> str:
+        item_id = _to_int(item_id)
+        if item_id <= 0:
+            return "item_id cannot be empty"
+        try:
+            self.table("node_alert_item").where("id=?", (item_id,)).delete()
+            self.table("node_alert_state").where("item_id=?", (item_id,)).delete()
+        except Exception as e:
+            return str(e)
+        return ""
+
+    @staticmethod
+    def _decode_alert_item(row: Dict[str, Any]) -> Dict[str, Any]:
+        row = dict(row)
+        row["scope"] = "global" if _to_int(row.get("node_id", 0)) == 0 else "node"
+        return row
+
+    @staticmethod
+    def _normalize_alert_item_data(data: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+        metric = str(data.get("metric", "")).strip()[:64]
+        if not metric:
+            return {}, "metric cannot be empty"
+        operator = str(data.get("operator", ">=")).strip()
+        if operator not in (">", ">=", "<", "<=", "==", "!="):
+            return {}, "Unsupported alert operator"
+        row = {
+            "node_id": max(_to_int(data.get("node_id", 0)), 0),
+            "metric": metric,
+            "enabled": 1 if _to_int(data.get("enabled", 0)) else 0,
+            "operator": operator,
+            "threshold": _to_float(data.get("threshold", 0)),
+            "threshold_unit": str(data.get("threshold_unit", "") or "").strip()[:32],
+            "duration_minutes": max(_to_int(data.get("duration_minutes", 1)), 0),
+            "target_key": str(data.get("target_key", "") or "").strip()[:255],
+            "target_name": str(data.get("target_name", "") or "").strip()[:255],
+        }
+        return row, ""
+
+    def get_alert_state(self, node_id: int, metric: str, target_key: str = "") -> Dict[str, Any]:
+        row = self.table("node_alert_state").where(
+            "node_id=? AND metric=? AND target_key=?",
+            (_to_int(node_id), str(metric or ""), str(target_key or "")),
+        ).find()
+        if not isinstance(row, dict) or not row:
+            return {}
+        return row
+
+    def upsert_alert_state(self, node_id: int, metric: str, target_key: str, data: Dict[str, Any]) -> str:
+        node_id = _to_int(node_id)
+        metric = str(metric or "")
+        target_key = str(target_key or "")
+        now = int(time.time())
+        row = {
+            "item_id": _to_int(data.get("item_id", 0)),
+            "status": str(data.get("status", "normal")),
+            "last_value": _to_float(data.get("last_value", 0)),
+            "last_message": str(data.get("last_message", ""))[:1000],
+            "first_trigger_at": _to_int(data.get("first_trigger_at", 0)),
+            "last_checked_at": _to_int(data.get("last_checked_at", now)),
+            "last_sent_at": _to_int(data.get("last_sent_at", 0)),
+            "send_count": _to_int(data.get("send_count", 0)),
+            "updated_at": now,
+        }
+        try:
+            old = self.get_alert_state(node_id, metric, target_key)
+            if old:
+                self.table("node_alert_state").where("id=?", (old["id"],)).update(row)
+            else:
+                row.update({
+                    "node_id": node_id,
+                    "metric": metric,
+                    "target_key": target_key,
+                })
+                self.table("node_alert_state").insert(row)
+        except Exception as e:
+            return str(e)
+        return ""
+
+    def get_alert_states(self, node_id: int = 0, metric: str = "", status: str = "", item_id: int = 0, limit: int = 1000) -> List[Dict[str, Any]]:
+        where = []
+        params = []
+        if _to_int(node_id):
+            where.append("node_id=?")
+            params.append(_to_int(node_id))
+        if metric:
+            where.append("metric=?")
+            params.append(str(metric))
+        if status:
+            where.append("status=?")
+            params.append(str(status))
+        if _to_int(item_id):
+            where.append("item_id=?")
+            params.append(_to_int(item_id))
+        query = self.table("node_alert_state")
+        if where:
+            query = query.where(" AND ".join(where), tuple(params))
+        data = query.order("updated_at", "DESC").limit(max(1, min(_to_int(limit, 1000), 5000))).select()
+        return data if isinstance(data, list) else []
+
+    def add_alert_history(self, data: Dict[str, Any]) -> str:
+        row = {
+            "node_id": _to_int(data.get("node_id", 0)),
+            "item_id": _to_int(data.get("item_id", 0)),
+            "metric": str(data.get("metric", "")),
+            "target_key": str(data.get("target_key", "")),
+            "trigger_value": _to_float(data.get("trigger_value", 0)),
+            "operator": str(data.get("operator", "")),
+            "threshold": _to_float(data.get("threshold", 0)),
+            "threshold_unit": str(data.get("threshold_unit", "") or "").strip()[:32],
+            "action": str(data.get("action", "")),
+            "message": str(data.get("message", ""))[:2000],
+            "sender_ids": _json_dumps(self._normalize_sender_ids(data.get("sender_ids", []))),
+            "send_result": _json_dumps(data.get("send_result", {})),
+            "created_at": _to_int(data.get("created_at", int(time.time()))),
+        }
+        try:
+            self.table("node_alert_history").insert(row)
+        except Exception as e:
+            return str(e)
+        return ""
+
+    def get_alert_history(self, node_id: int = 0, metric: str = "", item_id: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+        where = []
+        params = []
+        if _to_int(node_id):
+            where.append("node_id=?")
+            params.append(_to_int(node_id))
+        if metric:
+            where.append("metric=?")
+            params.append(str(metric))
+        if _to_int(item_id):
+            where.append("item_id=?")
+            params.append(_to_int(item_id))
+        query = self.table("node_alert_history")
+        if where:
+            query = query.where(" AND ".join(where), tuple(params))
+        data = query.order("created_at", "DESC").limit(max(1, min(_to_int(limit, 100), 1000))).select()
+        if not isinstance(data, list):
+            return []
+        for item in data:
+            if isinstance(item, dict):
+                item["sender_ids"] = _json_loads(item.get("sender_ids"), [])
+                item["send_result"] = _json_loads(item.get("send_result"), {})
+        return data
 
     @staticmethod
     def _select_primary(items: List[Dict[str, Any]], targets: List[Dict[str, Any]], item_key: str) -> Dict[str, Any]:

@@ -101,6 +101,7 @@
     "systemRestartReminder": "Rappel de redémarrage du système",
     "serverRestartedAt": "Votre serveur a redémarré le {time}.",
     "iKnow": "Je sais",
+    "memoEmpty": "Le contenu actuel est vide, cliquez pour le modifier",
     "Install": {
       "index_1_1": "Recommandé d'utiliser les packages en un clic suivants, veuillez choisir à la demande ou dans {soft_} Choisissez par vous-même, il est recommandé d'installer LEMP.",
       "index_1_2": "Magasin de logiciels",
@@ -141,7 +142,7 @@
       "index_19": "Mettre à jour maintenant",
       "index_20": "Instructions pour les testeurs bêta",
       "index_21": "Journal de mise à jour Linux Beta",
-      "index_23_1": "J'ai déjà vérifié {title} {attendre}",
+      "index_23_1": "J'ai déjà vérifié {title} {wait}",
       "index_23_2": "\"Instructions pour les testeurs bêta\"",
       "index_23_3": "{0} seconde (s) attendre pour cliquer",
       "index_24": "Mise à jour de la version bêta de Linux",
@@ -220,7 +221,7 @@
       "index_22": "Faire face à des fichiers malveillants",
       "index_23": "Scanner OSS",
       "index_24": "Activer la numérisation des répertoires OSS Mount",
-      "index_25": "Commutateur d'interception automatique",
+      "index_25": "Isoler les fichiers",
       "index_26": "Interrupteur de mise à mort dynamique",
       "index_27": "Le système actuel ne monte pas le répertoire OSS, donc le balayage OSS ne peut pas être activé",
       "index_28": "Activer le meurtre dynamique",
@@ -323,7 +324,7 @@
               "description": "Configurons votre premier projet en quelques minutes.",
               "softwarePage": "Page des logiciels",
         "lastConfig": "Dernière configuration: ",
-              "skipWizard": "Passer l'assistant",
+              "skipWizard": "Passer",
               "options": {
                 "wordpress": {
                   "title": "Créer un site WordPress",
@@ -440,7 +441,7 @@
               "active": "Actif",
               "copyPassword": "Copier le mot de passe",
               "nodeRuntime": "Environnement d'exécution Node.js",
-              "localPortValue": "Activé",
+              "localPortValue": "Port {0}",
               "enabled": "Activé",
               "disabled": "Désactivé",
               "publicDomainConnection": "Connexion domaine public",

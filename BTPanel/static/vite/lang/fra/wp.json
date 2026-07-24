@@ -171,7 +171,7 @@
 			"index_43": "Veuillez fermer et vider le cache avant d'activer le mode maintenance.",
 			"index_44": "Remarque : Pour éviter que le site Web ne soit dégradé par les moteurs d'indexation, veuillez ne pas activer le mode maintenance pendant une longue période.",
 			"index_45": "Il est recommandé de télécharger des fichiers HTML pour les modèles et d'utiliser des URL de données pour les fichiers statiques des modèles.",
-			"index_46": "Si vous souhaitez que votre modèle utilise la fonction de configuration de modèle d'aapanel, vous pouvez démarrer le mode maintenance une fois et modifier le fichier /wp-content/mintensionce/mintensione-template.html, en conservant l'espace réservé '{{}}'."
+			"index_46": "Si vous souhaitez que votre modèle utilise la fonction de configuration de modèle d'aapanel, vous pouvez démarrer le mode maintenance une fois et modifier le fichier /wp-content/mintensionce/mintensione-template.html, en conservant l'espace réservé {'{'}{'{'}{'}'}{'}'}."
 		},
 		"Label": {
 			"index_1": "Réinitialiser le mot de passe",

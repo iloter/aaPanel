@@ -1019,9 +1019,9 @@ def update_waf_config():
     task_ExecShell("update_waf_config")
 
 
-# 每6小时进行恶意文件扫描
-def malicious_file_scanning():
-    task_ExecShell("malicious_file_scanning")
+# # 每6小时进行恶意文件扫描  弃用 改手动执行
+# def malicious_file_scanning():
+#     task_ExecShell("malicious_file_scanning")
 
 
 # 多服务守护任务，仅在多服务下执行，每5分钟 300 s 检查一次
@@ -1343,7 +1343,7 @@ def auto_dream():
     """睡梦"""
     global _auto_dream_boot_run
     if not _auto_dream_boot_run:
-        _auto_dream_first_run = True
+        _auto_dream_boot_run = True
         return
     task_ExecShell("auto_dream")
 
@@ -1379,7 +1379,7 @@ TASKS = [
     {"func": find_favicons, "interval": 60 * 60 * 12},  # 每12小时找favicons
     {"func": auto_dream, "interval": 60 * 60 * 8},  # 每8小时睡梦(一天3次探测, 机制内24h节流+闲时, 实际24h~48h一次)
     {"func": domain_ssl_service, "interval": 3600},  # 每6小时进行域名SSL服务(内置时间标记, 可提前检查)
-    {"func": malicious_file_scanning, "interval": 60 * 60 * 6},  # 每每6小时进行恶意文件扫描
+    # {"func": malicious_file_scanning, "interval": 60 * 60 * 6},  # 每6小时进行恶意文件扫描 弃用 改手动执行
     {"func": count_ssh_logs, "interval": 3600 * 24},  # 每天统计SSH登录日志
     {"func": submit_module_call_statistics, "interval": 3600},  # 每天一次 提交今天之前的统计数据(内置时间标记, 可提前检查)
 

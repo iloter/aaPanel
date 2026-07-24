@@ -171,7 +171,7 @@
 			"index_43": "Chiudi e svuota la cache prima di attivare la modalità manutenzione.",
 			"index_44": "Nota: Per evitare il declassamento del ranking del sito da parte dei motori di ricerca, non attivare la modalità manutenzione per un lungo periodo.",
 			"index_45": "Si consiglia di caricare file HTML per i modelli e utilizzare URL di dati per i file di modelli statici.",
-			"index_46": "Se desideri che il tuo modello utilizzi la funzione di configurazione del modello aaPanel, puoi eseguire la modalità manutenzione una volta e modificare il file /wp-content/mintensionce/mintensione-template.html mantenendo il segnaposto '{{}}'."
+			"index_46": "Se desideri che il tuo modello utilizzi la funzione di configurazione del modello aaPanel, puoi eseguire la modalità manutenzione una volta e modificare il file /wp-content/mintensionce/mintensione-template.html mantenendo il segnaposto {'{'}{'{'}{'}'}{'}'}."
 		},
 		"Label": {
 			"index_1": "Reimpostare la password",

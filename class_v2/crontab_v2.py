@@ -152,6 +152,60 @@ class crontab:
                                             "name" VARCHAR DEFAULT '',
                                             "ps" VARCHAR DEFAULT '');''')
 
+    def _normalize_full_backup_params(self, get):
+        if get.get('sType', '') != 'full_backup':
+            return get
+
+        def _is_empty(value):
+            return value is None or str(value).strip() in ('', 'undefined', 'null')
+
+        def _set_default(key, value):
+            if key not in get or _is_empty(get.get(key)):
+                get[key] = value
+
+        get['name'] = 'Full Backup'
+        _set_default('type', 'week')
+        _set_default('week', '1')
+        _set_default('where1', get.get('week', '1') or '1')
+        _set_default('hour', '1')
+        _set_default('minute', '30')
+        _set_default('save', '3')
+
+        try:
+            if int(get.get('save', 3)) < 1:
+                get['save'] = '3'
+        except:
+            get['save'] = '3'
+
+        backup_to = str(get.get('backupTo') or 'localhost').strip()
+        if backup_to in ('', 'off', 'local'):
+            backup_to = 'localhost'
+        get['backupTo'] = backup_to
+
+        get['sName'] = 'ALL'
+        get['sBody'] = ''
+        get['urladdress'] = ''
+        get['save_local'] = '0' if backup_to == 'localhost' else str(get.get('save_local') or '0')
+        get['notice'] = get.get('notice', 0) or 0
+        get['notice_channel'] = get.get('notice_channel', '') or ''
+
+        get['db_type'] = ''
+        get['split_type'] = ''
+        get['split_value'] = ''
+        get['time_type'] = ''
+        get['time_set'] = ''
+        get['special_time'] = ''
+        get['second'] = ''
+        get['flock'] = 0
+        # public.print_log(
+        #     "[full_backup] normalize crontab params: type={}, week={}, where1={}, hour={}, minute={}, "
+        #     "backupTo={}, save={}, save_local={}, notice={}".format(
+        #         get.get('type'), get.get('week'), get.get('where1'), get.get('hour'), get.get('minute'),
+        #         get.get('backupTo'), get.get('save'), get.get('save_local'), get.get('notice')
+        #     )
+        # )
+        return get
+
     def get_zone(self, get):
         try:
             try:
@@ -280,12 +334,15 @@ class crontab:
                 'dogecloud':"Duoji Cloud COS",
                 'localhost':'Local Disk'
                 }
-                for index in range(len(result)):
-                    if 'backupTo' in result[index]:
-                        try:
-                            result[index]['backupTo'] = __CLOUD_TITLE[result[index]['backupTo']]
-                        except:
-                            result[index]['backupTo'] = result[index]['backupTo']
+                # 修复数据结构报错
+                if isinstance(result, dict):
+                    task_list = result.get("data", [])
+                else:
+                    task_list = result
+                # 遍历任务替换存储名称
+                for task in task_list:
+                    if "backupTo" in task:
+                        task["backupTo"] = __CLOUD_TITLE.get(task["backupTo"], task["backupTo"])
             return public.return_message(0,0,result)
     
         except Exception as e:
@@ -350,8 +407,8 @@ class crontab:
     def _paginate(self,data,get):
 
         total_count=len(data)
-        p=int(get.p) if hasattr(get,'p')else None
-        count=int(get.count) if hasattr(get,'count')else None
+        p=int(get.p) if hasattr(get,'p') else None
+        count=int(get.count) if hasattr(get,'count') else None
         if p and count:
             start=(p-1)*count
             end=start+count
@@ -434,7 +491,17 @@ class crontab:
         else:
             return " "        
     def search_tasks(self, data, search_term):
-        return [item for item in data if search_term in item['name'] or search_term in item['sName'] or search_term in item['addtime'] or search_term in item['echo']]
+        search_term = str(search_term or '').strip().lower()
+        if not search_term:
+            return data
+
+        def match(item):
+            return any(
+                search_term in str(item.get(field, '') or '').lower()
+                for field in ('name', 'sName', 'addtime', 'echo')
+            )
+
+        return [item for item in data if match(item)]
 
     def generate_cycle(self, type, where1, where_hour, where_minute,sType,second:None):
         try:
@@ -527,6 +594,116 @@ class crontab:
                     return []
         return result  
 
+    @staticmethod
+    def _safe_int(value, default=0):
+        try:
+            return int(value)
+        except:
+            return default
+
+    def _read_full_backup_task_list(self):
+        task_json = "/www/backup/backup_restore/backup_task.json"
+        if not os.path.exists(task_json):
+            return []
+        body = public.ReadFile(task_json)
+        if not body:
+            return []
+        try:
+            data = json.loads(body)
+            return data if isinstance(data, list) else []
+        except:
+            public.print_log("[full_backup] get_backup_list read backup_task.json failed: {}".format(traceback.format_exc()))
+            return []
+
+    def _format_full_backup_time(self, item):
+        for key in ("done_time", "backup_time", "create_time"):
+            value = item.get(key)
+            if value not in (None, ""):
+                return value
+        timestamp = self._safe_int(item.get("timestamp"), 0)
+        if timestamp > 0:
+            try:
+                return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+            except:
+                pass
+        return ""
+
+    def _full_backup_filename(self, item):
+        backup_file = str(item.get("backup_file") or "")
+        storage_type = str(item.get("cloud_storage") or item.get("storage_type") or "local")
+        cloud_path = str(item.get("cloud_upload_path") or "")
+
+        if backup_file:
+            if storage_type in ("", "off", "localhost", "local") or os.path.exists(backup_file):
+                return backup_file
+            if cloud_path:
+                return "{}|{}|{}".format(backup_file, storage_type, cloud_path.lstrip("/"))
+            return backup_file
+
+        if cloud_path and storage_type not in ("", "off", "localhost", "local"):
+            return "|{}|{}".format(storage_type, cloud_path.lstrip("/"))
+        return ""
+
+    def get_full_backup_data(self, cron_id, p, rows, callback):
+        cron_id = str(cron_id)
+        p = self._safe_int(p, 1)
+        rows = self._safe_int(rows, 10)
+        p = p if p > 0 else 1
+        rows = rows if rows > 0 else 10
+
+        backup_records = []
+        for item in self._read_full_backup_task_list():
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("cron_id", "")) != cron_id:
+                continue
+            if item.get("backup_mode") not in ("", None, "full_backup"):
+                continue
+
+            filename = self._full_backup_filename(item)
+            backup_file = str(item.get("backup_file") or "")
+            cloud_path = str(item.get("cloud_upload_path") or "")
+            display_name = os.path.basename(backup_file) or os.path.basename(cloud_path) or str(item.get("backup_name") or "Full Backup")
+            size = self._safe_int(item.get("backup_file_size"), 0)
+            if backup_file and os.path.exists(backup_file):
+                try:
+                    size = os.path.getsize(backup_file)
+                except:
+                    pass
+
+            storage_type = str(item.get("cloud_storage") or item.get("storage_type") or "local")
+            local_exists = 0 if backup_file and os.path.isfile(backup_file) else 1
+            backup_records.append({
+                "id": self._safe_int(item.get("timestamp"), 0),
+                "type": 0,
+                "name": display_name,
+                "pid": 0,
+                "filename": filename,
+                "size": size,
+                "addtime": self._format_full_backup_time(item),
+                "ps": "Plan task backup to {}".format("localhost" if storage_type in ("", "off", "localhost", "local") else storage_type),
+                "cron_id": self._safe_int(cron_id, 0),
+                "backup_type": 0,
+                "timestamp": self._safe_int(item.get("timestamp"), 0),
+                "backup_status": self._safe_int(item.get("backup_status"), 0),
+                "backup_count": item.get("backup_count") or {},
+                "storage_type": storage_type,
+                "cloud_upload_status": self._safe_int(item.get("cloud_upload_status"), 0),
+                "cloud_upload_path": cloud_path,
+                "cloud_name": str(item.get("cloud_name") or storage_type),
+                "local": backup_file,
+                "localexist": local_exists,
+                "bak_method": "local" if storage_type in ("", "off", "localhost", "local") else storage_type,
+            })
+
+        backup_records.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+        count = len(backup_records)
+        data = public.get_page(count, p, rows, callback)
+        start = (p - 1) * rows
+        data["data"] = backup_records[start:start + rows]
+        # public.print_log("[full_backup] get_backup_list: cron_id={}, total={}, page={}, rows={}".format(cron_id, count, p, rows))
+        return data
+
     def get_backup_list(self, args):
         '''
             @name 获取指定备份任务的备份文件列表
@@ -556,6 +733,8 @@ class crontab:
         if crontab:
             if "Incremental backup of database" in crontab['name']:
                 data = self.get_backup_data('mysql_increment_backup', cron_id, p, rows, callback)
+            elif crontab.get('sType') == 'full_backup':
+                data = self.get_full_backup_data(cron_id, p, rows, callback)
             elif crontab.get('sType') == 'site':
                 data = self.get_backup_data_all_site(cron_id, p, rows, callback)
             else:
@@ -821,6 +1000,7 @@ class crontab:
     # 修改计划任务
     def modify_crond(self, get):
         try:
+            self._normalize_full_backup_params(get)
             if re.search('<.*?>', get['name']):
                 return public.return_message(-1,0, public.lang("The category name cannot contain HTML statements"))
             if get['sType'] == 'toShell':
@@ -897,6 +1077,8 @@ WantedBy=timers.target
             del (cronInfo['id'])
             del (cronInfo['addtime'])
             cronInfo['name'] = get['name']
+            if cronInfo['sType'] == "full_backup":
+                cronInfo['sName'] = get['sName']
             if cronInfo['sType'] == "sync_time": cronInfo['sName'] = get['sName']
             cronInfo['type'] = get['type']
             cronInfo['where1'] = get['where1']
@@ -1125,6 +1307,7 @@ WantedBy=timers.target
     # 添加计划任务
     def AddCrontab(self, get):
         try:
+            self._normalize_full_backup_params(get)
             if get['type']=="second-n":
                 get['type']="minute-n"
                 get['where1']= "1"
@@ -1139,7 +1322,9 @@ WantedBy=timers.target
             # 修改sBody
             user = get.get('user', 'root')
             if user:
-                if get["sType"] != "toShell":
+                if get["sType"] == "full_backup":
+                    get['sBody'] = ""
+                elif get["sType"] != "toShell":
                     get['sBody'] = "sudo -u {0} bash -c '{1}'".format(user, get['sBody'])
                 else:
                     get['sBody'] = f"sudo -u {user} bash <<'EOF'\n{get['sBody']}\nEOF"
@@ -1200,6 +1385,9 @@ WantedBy=timers.target
             if addData > 0:
                 result = public.return_message(0,0, public.lang('ADD_SUCCESS'))
                 result['message']['id'] = addData
+                # 全量备份定时任务埋点
+                if get["sType"] == "full_backup":
+                    public.set_module_logs('crontab', 'full_backup')
                 return result
             return public.return_message(-1,0, public.lang('Failed to add'))
         except Exception as e:
@@ -1631,6 +1819,8 @@ WantedBy=timers.target
                 'database': head + python_bin + " " + public.GetConfigValue(
                     'setup_path') + "/panel/script/backup.py database " + param['sName'] + " " + str(
                     param['save']) + attach_param,
+                'full_backup': head + python_bin + " " + public.GetConfigValue(
+                    'setup_path') + "/panel/mod/project/backup_restore/cron_full_backup.py " + cronName,
                 'logs': head + python_bin + " " + public.GetConfigValue('setup_path') + "/panel/script/logsBackup " +
                         param['sName'] + " " + str(param['save']) + " " + log_cut_path,
                 'rememory': head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
@@ -1742,10 +1932,14 @@ rm -f {cronFile}
 
     # 立即执行任务
     def StartTask(self, get):
-        echo = public.M('crontab').where('id=?', (get.id,)).getField('echo')
-        if not echo:
+        cron_info = public.M('crontab').where('id=?', (get.id,)).field('name,echo,sType').find()
+        if not cron_info:
             return public.return_message(-1,0, public.lang("No data was found for the corresponding scheduled task. Please refresh the page to check if the scheduled task exists!"))
+        echo = cron_info['echo']
         execstr = public.GetConfigValue('setup_path') + '/cron/' + echo
+        if cron_info.get('sType') == 'full_backup':
+            log_msg = "[full_backup] StartTask requested: id={}, echo={}, script={}".format(get.id, echo, execstr)
+            public.writeFile(execstr + '.log', time.strftime("[%Y-%m-%d %H:%M:%S] ") + log_msg + "\n", "a+")
         public.ExecShell('chmod +x ' + execstr)
         public.ExecShell('nohup ' + execstr +' start >> ' + execstr + '.log 2>&1 &')
         return public.return_message(0,0, public.lang('CRONTAB_TASK_EXEC'))

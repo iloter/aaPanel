@@ -98,7 +98,7 @@
 				},
 				"Errors": {
 					"emptyList": "Por favor agregue al menos un archivo de respaldo",
-					"emptyBakFile": "La ruta del archivo de respaldo para el elemento {índice} no puede estar vacía",
+					"emptyBakFile": "La ruta del archivo de respaldo para el elemento {index} no puede estar vacía",
 					"emptyDomain": "El dominio del sitio {index} no puede estar vacío"
 				},
 				"Item": {
@@ -182,7 +182,7 @@
 			"index_43": "Cierre y borre el caché antes de activar el modo de mantenimiento.",
 			"index_44": "Nota: Para evitar que los motores de indexación degraden el sitio web, no habilite el modo de mantenimiento durante un período prolongado.",
 			"index_45": "Se recomienda cargar archivos HTML para plantillas y utilizar URL de datos para archivos estáticos de plantillas.",
-			"index_46": "Si desea que su plantilla utilice la función de configuración de plantilla de aapanel, puede iniciar el modo de mantenimiento una vez y modificar el archivo /wp-content/mintensionce/mintensione-template.html, manteniendo el marcador de posición '{{}}'."
+			"index_46": "Si desea que su plantilla utilice la función de configuración de plantilla de aapanel, puede iniciar el modo de mantenimiento una vez y modificar el archivo /wp-content/mintensionce/mintensione-template.html, manteniendo el marcador de posición {'{'}{'{'}{'}'}{'}'}."
 		},
 		"Label": {
 			"index_1": "Restablecer contraseña",

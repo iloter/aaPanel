@@ -374,7 +374,7 @@
 			"title": "قائمة المفضلة",
 			"path": "المسار",
 			"removeFavoriteTitle": "إزالة من المفضلة",
-			"removeFavoriteMessage": "تأكيد حذف المسار [{path}]؟",
+			"removeFavoriteMessage": "تأكيد حذف المسار [{name}]؟",
 			"management": "الإدارة",
 			"cancelFavoriteTitle": "إلغاء المفضلة",
 			"cancelFavoriteMessage": "إلغاء المفضلة لـ [{name}]، هل تريد المتابعة؟"

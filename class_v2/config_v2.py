@@ -4237,4 +4237,12 @@ class config:
             )
         except Exception as e:
             return public.fail_v2("get export file info failed: {}".format(str(e)))
+    # 获取备忘录内容
+    def get_memo_body(self, get):
+        memo_path = "/www/server/panel/data/memo.txt"
+        if not os.path.exists(memo_path):
+            public.writeFile(memo_path, "")
+
+        content = public.readFile(memo_path)
+        return public.return_message(0, 0,content)
     # =================== 主题, 界面 END ========================

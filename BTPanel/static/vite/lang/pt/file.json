@@ -441,7 +441,7 @@
 			"title": "Lista de Favoritos",
 			"path": "Caminho",
 			"removeFavoriteTitle": "Remover favorito",
-			"removeFavoriteMessage": "Confirmar exclusão do caminho [{path}]?",
+			"removeFavoriteMessage": "Confirmar exclusão do caminho [{name}]?",
 			"management": "Gerenciamento",
 			"cancelFavoriteTitle": "Cancelar favorito",
 			"cancelFavoriteMessage": "Cancelar o favorito para [{name}], continuar?"

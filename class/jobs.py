@@ -127,14 +127,10 @@ def install_packages():
         public.print_log("install_packages error:", str(e))
 
     try:
-        install_pycountry()
-    except Exception as e:
-        public.print_log("install pycountry error:", str(e))
-
-    try:
         install_pyroute2()
     except Exception as e:
         public.print_log("install pyroute2 error:", str(e))
+
 
 def rm_apache_cgi_test():
     '''
@@ -611,7 +607,6 @@ def install_pyroute2():
     if os.path.exists(script_file) and not os.path.exists(tip_file):
         public.writeFile(tip_file,'1')
         os.system("bash {}".format(script_file))
-        public.restart_panel()
     whl_file = '{}/script/pyroute2-0.7.12-py3-none-any.whl'.format(public.get_panel_path())
     if os.path.exists(whl_file):
         os.remove(whl_file)

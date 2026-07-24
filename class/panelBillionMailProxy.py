@@ -3,6 +3,7 @@
 # aaPanel
 # -------------------------------------------------------------------
 
+import os
 import re
 import json
 import socket
@@ -71,9 +72,18 @@ class BillionMailProxy:
     def _request_headers(self, target_base):
         headers = {}
         target = urllib.parse.urlparse(target_base)
+        panel_scheme = self._panel_scheme()
         for key in request.headers.keys():
             lower_key = key.lower()
-            if lower_key in self.HOP_BY_HOP_HEADERS or lower_key == "host":
+            if lower_key in self.HOP_BY_HOP_HEADERS or lower_key in (
+                "host",
+                "forwarded",
+                "x-forwarded-host",
+                "x-forwarded-proto",
+                "x-forwarded-scheme",
+                "x-forwarded-ssl",
+                "x-forwarded-prefix",
+            ):
                 continue
             value = request.headers.get(key)
             if lower_key == "cookie":
@@ -88,8 +98,11 @@ class BillionMailProxy:
 
         headers["Accept-Encoding"] = "identity"
         headers["X-Forwarded-Host"] = request.host
-        headers["X-Forwarded-Proto"] = request.scheme
+        headers["X-Forwarded-Proto"] = panel_scheme
+        headers["X-Forwarded-Scheme"] = panel_scheme
+        headers["X-Forwarded-SSL"] = "on" if panel_scheme == "https" else "off"
         headers["X-Forwarded-Prefix"] = self.proxy_prefix
+        headers["Forwarded"] = 'proto={};host="{}"'.format(panel_scheme, request.host)
         headers["X-Real-IP"] = request.headers.get("X-Real-IP", request.remote_addr or "")
         return headers
 
@@ -159,6 +172,7 @@ class BillionMailProxy:
     def _rewrite_location(self, value, target_base):
         if not value:
             return value
+        value = self._rewrite_panel_absolute_urls(value)
         target = urllib.parse.urlparse(target_base)
         parsed = urllib.parse.urlparse(value)
         if parsed.scheme and parsed.netloc:
@@ -337,6 +351,122 @@ class BillionMailProxy:
         return path.endswith((".html", ".htm", ".css", ".js", ".json", ".xml"))
 
     @staticmethod
+    def _panel_ssl_enabled():
+        try:
+            if os.path.exists("/www/server/panel/data/ssl.pl"):
+                return True
+            panel_path = public.get_panel_path()
+            if panel_path:
+                return os.path.exists(os.path.join(panel_path, "ssl", "input.pl"))
+        except Exception:
+            pass
+        return False
+
+    def _panel_scheme(self):
+        return "https" if self._panel_ssl_enabled() else "http"
+
+    def _panel_origin_hosts(self):
+        hosts = []
+        values = (
+            request.host,
+            request.headers.get("Host", ""),
+            request.headers.get("X-Forwarded-Host", ""),
+            request.environ.get("HTTP_HOST", ""),
+            request.environ.get("SERVER_NAME", ""),
+        )
+        for value in values:
+            for host in str(value or "").split(","):
+                host = host.strip()
+                if host and host not in hosts:
+                    hosts.append(host)
+
+        server_name = str(request.environ.get("SERVER_NAME", "") or "").strip()
+        server_port = str(request.environ.get("SERVER_PORT", "") or "").strip()
+        if server_name and server_port and ":" not in server_name:
+            host = "{}:{}".format(server_name, server_port)
+            if host not in hosts:
+                hosts.append(host)
+        return hosts
+
+    def _panel_proxy_prefixes(self):
+        prefixes = []
+        for prefix in (self.proxy_prefix.rstrip("/"), "/billionmail"):
+            if prefix and prefix not in prefixes:
+                prefixes.append(prefix)
+        return prefixes
+
+    def _rewrite_panel_absolute_urls(self, text):
+        if not text:
+            return text
+        prefixes = self._panel_proxy_prefixes()
+        if not prefixes:
+            return text
+
+        for host in self._panel_origin_hosts():
+            host_re = re.escape(host)
+            for proxy in prefixes:
+                proxy_re = re.escape(proxy)
+                escaped_proxy_re = proxy_re.replace("/", r"\\/")
+                text = re.sub(
+                    r"(?:https?:)?//" + host_re + r"(" + proxy_re + r"(?=/|[?#]|$))",
+                    r"\1",
+                    text,
+                )
+                text = re.sub(
+                    r"(?:https?:)?\\\/\\\/" + host_re + r"(" + escaped_proxy_re + r"(?=\\\/|[?#]|$))",
+                    r"\1",
+                    text,
+                )
+        return text
+
+    def _rewrite_csp_for_panel_scheme(self, text):
+        if self._panel_scheme() != "http":
+            return text
+
+        def rewrite_meta(match):
+            tag = match.group(0)
+            content_match = re.search(r'(?is)(\bcontent\s*=\s*)(["\'])(.*?)\2', tag)
+            if not content_match:
+                return ""
+
+            directives = []
+            for directive in content_match.group(3).split(";"):
+                directive = directive.strip()
+                if directive and directive.lower() != "upgrade-insecure-requests":
+                    directives.append(directive)
+            if not directives:
+                return ""
+
+            start, end = content_match.span(3)
+            return tag[:start] + "; ".join(directives) + tag[end:]
+
+        return re.sub(
+            r'(?is)<meta\b(?=[^>]*\bhttp-equiv\s*=\s*["\']?Content-Security-Policy["\']?)'
+            r'(?=[^>]*\bcontent\s*=\s*["\'][^"\']*upgrade-insecure-requests[^"\']*["\'])[^>]*>',
+            rewrite_meta,
+            text,
+        )
+
+    def _rewrite_settings_system_config(self, text, path_full, config=None):
+        path = (path_full or "").split("?", 1)[0].strip("/").lower()
+        if path != "api/settings/get_system_config":
+            return text
+
+        try:
+            body = json.loads(text)
+        except Exception:
+            return text
+
+        data = body.get("data") if isinstance(body, dict) else None
+        if not isinstance(data, dict):
+            return text
+
+        data.pop("manage_ports", None)
+        data.pop("manage_timezone", None)
+
+        return json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+
+    @staticmethod
     def _webmail_url(config):
         if not isinstance(config, dict):
             return ""
@@ -352,8 +482,9 @@ class BillionMailProxy:
         if not webmail_url:
             return text
 
-        panel_origin = "{}://{}".format(request.scheme, request.host).rstrip("/")
-        text = text.replace(panel_origin + "/roundcube", webmail_url)
+        for scheme in ("http", "https"):
+            panel_origin = "{}://{}".format(scheme, request.host).rstrip("/")
+            text = text.replace(panel_origin + "/roundcube", webmail_url)
         text = text.replace("${location.origin}/roundcube", webmail_url)
         text = text.replace("${window.location.origin}/roundcube", webmail_url)
 
@@ -417,6 +548,7 @@ class BillionMailProxy:
         proxy = self.proxy_prefix
         path = (path_full or "").split("?", 1)[0].lower()
         webmail_url = self._webmail_url(config)
+        text = self._rewrite_settings_system_config(text, path_full, config)
 
         replacements = (
             ('${location.origin}/static/', '${location.origin}' + proxy + '/static/'),
@@ -459,9 +591,10 @@ class BillionMailProxy:
             )
             text = self._rewrite_webmail_url(text, webmail_url)
         elif path.endswith((".html", ".htm")) or "<html" in text[:1024].lower():
+            text = self._rewrite_csp_for_panel_scheme(text)
             text = self._rewrite_webmail_url(text, webmail_url)
             text = self._inject_webmail_rewrite_script(text, webmail_url)
-        return text
+        return self._rewrite_panel_absolute_urls(text)
 
     def _response_content(self, upstream_response, path_full, config=None):
         content = upstream_response.content
@@ -476,6 +609,11 @@ class BillionMailProxy:
             except Exception:
                 return content
         return self._rewrite_text_content(text, path_full, config).encode(encoding, errors="ignore")
+
+    def _is_html_response(self, upstream_response, path_full):
+        content_type = (upstream_response.headers.get("content-type") or "").lower()
+        path = (path_full or "").split("?", 1)[0].lower()
+        return "text/html" in content_type or path.endswith((".html", ".htm")) or path in ("", "/")
 
     def proxy(self, path_full=""):
         try:
@@ -503,6 +641,10 @@ class BillionMailProxy:
                 content_type=upstream_response.headers.get("content-type", None),
                 status=upstream_response.status_code,
             )
+            if self._is_html_response(upstream_response, path_full):
+                response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+                response.headers["Pragma"] = "no-cache"
+                response.headers["Expires"] = "0"
             return self._set_cookie_headers(response, upstream_response)
         except Exception as ex:
             return self._error(str(ex), 500)

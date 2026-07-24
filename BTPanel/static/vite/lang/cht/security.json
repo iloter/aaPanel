@@ -225,6 +225,7 @@
 			"index_7": "打開SSH服務",
 			"index_8": "您確定打開SSH服務嗎？",
 			"index_9": "關閉SSH服務還將註銷所有已記錄的用戶，繼續嗎？",
+			"index_10": "SSH系統帳戶管理",
 			"Basic": {
 				"index_1": "SSH密碼登錄",
 				"index_2": "SSH密鑰登錄",
@@ -268,6 +269,42 @@
 					"whitelist_1": "請輸入IP",
 					"whitelist_2": "IP"
 				}
+			},
+			"Account": {
+				"create": "建立系統使用者",
+				"conversion_title": "SSH系統帳戶管理",
+				"overview": "概覽",
+				"feature_modify_password": "修改系統使用者密碼",
+				"feature_delete_user": "刪除系統使用者",
+				"feature_anti_intrusion": "防入侵",
+				"username": "使用者名稱",
+				"protection": "防提權",
+				"log": "命令記錄",
+				"remark": "備註",
+				"command_log": "命令日誌",
+				"reset_password": "重設密碼",
+				"create_title": "建立系統使用者",
+				"reset_title": "重設密碼：{0}",
+				"password": "密碼",
+				"new_password": "新密碼",
+				"username_placeholder": "請輸入使用者名稱",
+				"password_placeholder": "請輸入密碼",
+				"username_invalid": "使用者名稱長度必須為2至20個字元，且只能包含字母和數字，不允許使用特殊字元",
+				"password_min": "密碼長度至少為8個字元",
+				"delete_title": "刪除使用者：{0}",
+				"delete_content": "刪除後，該系統使用者將無法再登入伺服器。此操作無法復原。",
+				"confirm_delete": "確認刪除",
+				"tip_1": "開啟防提權後，系統會限制並記錄高風險命令。",
+				"tip_2": "關閉防提權後，系統只會記錄和追蹤該使用者執行的命令。",
+				"tip_3": "防提權目前主要處理由 www、redis、mysql 等使用者造成的提權風險。",
+				"plugin_missing": "請先安裝防入侵外掛程式，再管理SSH系統帳戶",
+				"install_plugin": "安裝外掛程式",
+				"professional_only": "專業版功能",
+				"professional_desc": "SSH系統帳戶管理包含在伺服器上建立、刪除和管理SSH使用者帳戶。這些帳戶可透過SSH安全地遠端存取伺服器，通常由系統管理員維護，以確保只有授權使用者可以存取伺服器。",
+				"upgrade": "立即升級",
+				"no_logs": "目前沒有可用的命令日誌",
+				"api_create": "正在建立系統使用者，請稍候...",
+				"api_delete": "正在刪除系統使用者，請稍候..."
 			},
 			"Logs": {
 				"index_1": "全部",
@@ -636,6 +673,156 @@
 						"desc": "通過日誌分析，挖掘訪問異常與安全隱患"
 					}
 				}
+			}
+		},
+		"Overview": {
+			"header": {
+				"title": "Security Overview",
+				"subtitle": "Monitor your server security posture and respond to threats before they impact your services.",
+				"systemRunning": "System running"
+			},
+			"sections": {
+				"securityScan": "Security Scan",
+				"recommendedActions": "Recommended Actions",
+				"recentSecurityEvents": "Recent Security Events",
+				"scanOverview": "Scan Overview",
+				"last7Days": "Last 7 days",
+				"scanning": "Scanning..."
+			},
+			"Api": {
+				"settingStatus": "Applying settings, please wait..."
+			},
+			"common": {
+				"noData": "No data yet"
+			},
+			"protection": {
+				"title": "Protection Status",
+				"enabledCount": "Enabled {enabled}/{total}",
+				"confirm": {
+					"enableTitle": "啟用{name}",
+					"enableContent": "確定要啟用{name}嗎？",
+					"disableTitle": "停用{name}",
+					"disableContent": "確定要停用{name}嗎？"
+				},
+				"names": {
+					"firewall": "Firewall",
+					"tamperCore": "Tamper-proof for Enterprise",
+					"ssh": "SSH Protection",
+					"btwaf": "Nginx WAF",
+					"fail2ban": "Fail2Ban"
+				},
+				"status": {
+					"enabled": "Enabled",
+					"disabled": "Disabled",
+					"notInstalled": "Not installed"
+				},
+				"details": {
+					"allowedPorts": "Allowed ports: ",
+					"portSeparator": ", ",
+					"monitoringPrefix": "Monitoring ",
+					"monitoringSuffix": " core files for changes",
+					"currentPort": "Current port: ",
+					"keyLogin": "Key login: ",
+					"passwordLogin": "Password login: ",
+					"blocks": "Blocks:",
+					"todayRequest": "今日請求：",
+					"todayMaliciousRequest": "今日惡意請求：",
+					"blockedPrefix": "Blocked ",
+					"bruteForceMiddle": " brute-force attempts · ",
+					"bannedIpSuffix": " IPs banned"
+				},
+				"settings": {
+					"quickAllowPorts": "Quick allow ports",
+					"configureProduct": "Configure {name}",
+					"sshSettings": "SSH settings"
+				},
+				"forms": {
+					"portNumber": "端口號"
+				},
+				"ssh": {
+					"keyLoginDesc": "允許使用密鑰進行SSH登錄",
+					"passwordLoginDesc": "允許使用密碼進行SSH登錄",
+					"keysTitle": "SSH密鑰"
+				},
+				"attacks": {
+					"cc": "CC attacks",
+					"xss": "XSS",
+					"sql": "SQL injection"
+				}
+			},
+			"scanCards": {
+				"labels": {
+					"securityRisk": "Security Risk",
+					"malwareDetection": "Malware Detection",
+					"websiteVulnerability": "Website Vulnerability",
+					"baseline": "Baseline"
+				},
+				"waitingFirstScan": "Waiting for first scan",
+				"details": "Details →",
+				"detailsAria": "{label} details"
+			},
+			"riskLevels": {
+				"critical": "Critical",
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low",
+				"normal": "Normal"
+			},
+			"recommended": {
+				"emptyTitle": "No recommended actions",
+				"emptyDesc": "Recommended actions will be generated automatically after a security scan.",
+				"noDescription": "No recommendation details",
+				"defaultTitle": "Recommended Action",
+				"badgeItems": "{count} items",
+				"badgeZeroItems": "0 items",
+				"buttons": {
+					"fixNow": "Fix Now",
+					"resolve": "Resolve",
+					"review": "Review",
+					"view": "View"
+				}
+			},
+			"events": {
+				"title": "Recent Security Events",
+				"defaultTitle": "Security event",
+				"noEventDetails": "No event details",
+				"emptyTitle": "No security events",
+				"emptyDesc": "Your server is running normally. Security events will appear here after a scan.",
+				"allLoaded": "All security events loaded",
+				"viewAll": "View All →",
+				"autoRecord": "Events will be recorded after the first scan",
+				"filters": {
+					"all": "All categories",
+					"info": "Info",
+					"low": "Low",
+					"medium": "Medium",
+					"high": "High",
+					"critical": "Critical",
+					"searchPlaceholder": "Search security events"
+				},
+				"status": {
+					"normal": "Normal",
+					"warning": "Warning",
+					"blocked": "Blocked"
+				}
+			},
+			"health": {
+				"status": {
+					"scanning": "Scanning",
+					"pending": "Not scanned"
+				},
+				"levels": {
+					"healthy": "Healthy",
+					"good": "Good",
+					"attention": "Needs Attention",
+					"critical": "Critical"
+				},
+				"scanningDesc": "Running a full server security scan",
+				"pleaseWait": "Please wait",
+				"lastScan": "Last scan: {time}",
+				"notScanned": "No security scan has been run yet.",
+				"clickToStart": "Click Start Scan to begin.",
+				"startScan": "Start Scan"
 			}
 		},
 		"NetworkScan": {

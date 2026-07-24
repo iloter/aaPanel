@@ -1008,6 +1008,38 @@ REQUEST_FORM: {request_form}
 
 
 # ===================================普通路由区========================#
+# _INDEX_NEW_BASE_PREFIXES = {
+#     'site', 'database', 'docker', 'wp', 'mail', 'security', 'crontab', 'waf', 'btwaf','setting', 'logs',
+#     'monitor/system','control', 'binds', 'softs', 'modify_password', 'flow', 'ssl_domain', 'node',
+#     'ai','ssh_security',
+#
+#     'config', 'soft', 'crontab', 'docker', 'control', 'logs', 'database',
+#     'ftp', 'site', 'xterm', 'firewall', 'files', 'ssh_security',
+#     'wp', 'waf', 'btwaf', 'mail', 'node', 'ssl_domain', 'whm', 'ai',
+#     'aapanelsub'
+# }
+#
+#
+# def _is_index_new_sub_path(sub_path):
+#     normalized_path = (sub_path or '').strip('/')
+#     if not normalized_path:
+#         return True
+#     if normalized_path == 'unsubscribe.html':
+#         return True
+#
+#     first_segment = normalized_path.split('/', 1)[0]
+#     allowed_prefixes = set(_INDEX_NEW_BASE_PREFIXES)
+#     for href in menu_map.values():
+#         href_path = str(href).split('?', 1)[0].strip('/')
+#         if not href_path:
+#             continue
+#         menu_segment = href_path.split('/', 1)[0]
+#         if menu_segment != 'login':
+#             allowed_prefixes.add(menu_segment)
+#
+#     return first_segment in allowed_prefixes
+
+
 # @app.route('/', methods=method_all)
 # def home():
 #     # 面板首页
@@ -1034,6 +1066,9 @@ def index_new(sub_path: str = ''):
     '''
     if sub_path == 'unsubscribe.html':
         return render_template('unsubscribe.html')
+
+    # if not _is_index_new_sub_path(sub_path):
+    #     return abort(404)
 
     # 面板首页
     comReturn = comm.local()
@@ -1987,7 +2022,7 @@ def plugin(pdata=None):
     defs = ('get_usually_plugin', 'check_install_limit', 'set_score',
             'get_score', 'update_zip', 'input_zip', 'export_zip', 'add_index',
             'remove_index', 'sort_index', 'install_plugin', 'uninstall_plugin',
-            'get_soft_find', 'get_index_list', 'get_soft_list',
+            'get_soft_find', 'get_index_list', 'get_soft_list','get_soft_list_card',
             'get_cloud_list', 'check_deps', 'flush_cache', 'GetCloudWarning',
             'install', 'unInstall', 'getPluginList', 'getPluginInfo',
             'get_make_args', 'add_make_args', 'getPluginStatus',
@@ -4658,6 +4693,9 @@ def site_v2(pdata=None):
         'add_project_site_type',
         'modify_project_site_type',
         'remove_project_site_type',
+        # 克隆php网站
+        'clone_php_site',
+        'get_php_clone_progress',
     )
     return publicObject(siteObject, defs, None, pdata)
 
@@ -4933,7 +4971,8 @@ def ssh_security_v2(pdata=None):
             'start_auth_method', 'stop_auth_method', 'get_auth_method',
             'check_so_file', 'get_so_file', 'get_pin', 'set_login_send',
             'get_login_send', 'get_msg_push_list', 'clear_login_send', 'set_root_password',
-            'get_sshd_anti_logs', 'set_anti_conf', 'get_anti_conf', 'del_ban_ip')
+            'get_sshd_anti_logs', 'set_anti_conf', 'get_anti_conf', 'del_ban_ip',
+            'add_sys_user', 'del_sys_user')
     return publicObject(firewallObject, defs, None, pdata, is_csrf)
 
 
@@ -5463,6 +5502,7 @@ def config_v2(pdata=None):
         'set_password_safe',
         'setlastPassword',
         'get_module_template',
+        'get_memo_body',
         # 新增nps评分
         'write_nps_new',
         'get_nps_new',
@@ -5822,7 +5862,7 @@ def plugin_v2(pdata=None):
     defs = ('get_usually_plugin', 'check_install_limit', 'set_score',
             'get_score', 'update_zip', 'input_zip', 'export_zip', 'add_index',
             'remove_index', 'sort_index', 'install_plugin', 'uninstall_plugin',
-            'get_soft_find', 'get_index_list', 'get_soft_list',
+            'get_soft_find', 'get_index_list', 'get_soft_list','get_soft_list_card',
             'get_cloud_list', 'check_deps', 'flush_cache', 'GetCloudWarning',
             'install', 'unInstall', 'getPluginList', 'getPluginInfo',
             'get_make_args', 'add_make_args', 'getPluginStatus',
@@ -6464,6 +6504,7 @@ def databaseModel_v2(def_name):
 @app.route(route_v2 + '/safe/ssh/<def_name>', methods=method_all)
 @app.route(route_v2 + '/safe/syslog/<def_name>', methods=method_all)
 @app.route(route_v2 + '/safe/serversafe/<def_name>', methods=method_all)
+@app.route(route_v2 + '/safe/overview/<def_name>', methods=method_all)
 def safeModel_v2(def_name):
     if request.method not in ['GET', 'POST']: return
     path_split = request.path.split("/")
@@ -6501,6 +6542,7 @@ def safeModel_v2(def_name):
 @app.route(route_v2 + '/panel/totle_db/<def_name>', methods=method_all)
 @app.route(route_v2 + '/panel/webscanning/<def_name>', methods=method_all)
 @app.route(route_v2 + '/panel/public/<def_name>', methods=method_all)
+@app.route(route_v2 + '/panel/history/<def_name>', methods=method_all)
 @app.route(route_v2 + '/monitor/process_management/<def_name>',
            methods=method_all)
 @app.route(route_v2 + '/monitor/soft/<def_name>', methods=method_all)

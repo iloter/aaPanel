@@ -433,7 +433,7 @@
             "shareAddress": "Adresse de partage",
             "expirationDate": "Date d'expiration",
             "cancelShareTitle": "Annuler le partage",
-            "cancelShareMessage": "Confirmer pour arrêter le partage 【{nom de fichier}】, continuer?",
+            "cancelShareMessage": "Confirmer pour arrêter le partage 【{filename}】, continuer?",
             "deletingShare": "Suppression du lien de partage, veuillez patienter ...",
             "searchPlaceholder": "Saisissez le nom du partage"
         },
@@ -441,7 +441,7 @@
             "title": "Liste préférée",
             "path": "Chemin",
             "removeFavoriteTitle": "Supprimer le favori",
-            "removeFavoriteMessage": "Confirmer delete Path [{path}]?",
+            "removeFavoriteMessage": "Confirmer delete Path [{name}]?",
             "management": "Gestion",
             "cancelFavoriteTitle": "Annuler le favori",
             "cancelFavoriteMessage": "Annuler le favori pour [{name}], continuer ?"
@@ -507,7 +507,7 @@
             "estimatedRemaining": "Estimé restant",
             "waitingTasks": "Tâches d'attente",
             "deleteTask": "Supprimer la tâche",
-            "confirmDeleteTask": "Êtes-vous sûr de vouloir supprimer la tâche actuelle [{nom}: {shell}]?",
+            "confirmDeleteTask": "Êtes-vous sûr de vouloir supprimer la tâche actuelle [{name}: {shell}]?",
             "noLogs": "Aucun journal"
         },
         "properties": {

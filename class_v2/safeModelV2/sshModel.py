@@ -280,11 +280,14 @@ class main(safeBase):
         data = {}
         data['port'] = port
         data['status'] = status
+        data['status_text'] = public.lang('Running') if status else public.lang('Stopped')
         data['ping'] = isPing
         data['config'] = ssh_security().get_config(None).get("message", {})
         data['firewall_status'] = self.CheckFirewallStatus()
         # data['error'] = self.get_ssh_intrusion(get)
         data['fail2ban'] = self._get_ssh_fail2ban()
+        ban_job = public.M('crontab').where("name='aa-SSH Blast IP Blocking [Security - SSH Admin - Add to Login Logs]'", ()).count()
+        data['ban_cron_job'] =  ban_job > 0
         return public.return_message(0, 0,  data)
 
     def get_ssh_login_info(self, get):

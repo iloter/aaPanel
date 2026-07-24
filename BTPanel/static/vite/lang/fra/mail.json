@@ -522,6 +522,12 @@
 				"open": "Ouvrir",
 				"configurationParameters": "Paramètres de configuration",
 				"active": "Actif",
+				"conflictTitle": "Conflit de l'environnement d'installation",
+				"conflictAlertTitle": "Conflits de ports détectés",
+				"conflictAlertDescription": "Les ports suivants sont occupés par d'autres applications. Résolvez les conflits de ports puis réessayez.",
+				"checkInstallFailed": "La vérification de l'environnement d'installation a échoué. Vérifiez l'environnement du serveur et réessayez.",
+				"conflictOccupied": "Occupé",
+				"conflictProcess": "Processus",
 				"successTip": "Ouvrez la console BillionMail après l’installation et terminez les réglages du domaine, DNS et de vérification de l’expéditeur."
 			}
 		}

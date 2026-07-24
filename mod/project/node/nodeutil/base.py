@@ -1200,6 +1200,15 @@ def monitor_all_node_status():
     except Exception:
         if public.is_debug():
             public.print_error()
+    # 采集完成后调用一次告警判断
+    try:
+        from mod.project.node.nodeutil.alert_engine import NodeAlertEngine
+        result = NodeAlertEngine().scan_once()
+        if result.get("errors") and public.is_debug():
+            public.print_log("Node alert scan errors: {}".format(result.get("errors")))
+    except Exception:
+        if public.is_debug():
+            public.print_error()
 
 
 def monitor_node_once(node_data: dict):

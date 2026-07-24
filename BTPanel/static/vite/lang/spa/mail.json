@@ -94,7 +94,7 @@
 			"index_3": "Cuota",
 			"index_4": "Tipo",
 			"index_5": "Webmail no está activado",
-			"index_6": "Webmail aún no está activado. Vaya a \"{Link_1}\" para activarlo e instalarlo",
+			"index_6": "Webmail aún no está activado. Vaya a \"{link_1}\" para activarlo e instalarlo",
 			"index_7": "Editar buzón",
 			"index_8": "Eliminar el buzón",
 			"index_9": "Si eliminar el miembro [{0}]?",
@@ -357,7 +357,7 @@
 			"index_7": "Instalado",
 			"index_8": "No instalar",
 			"index_9": "URL:",
-			"index_10": "(El dominio actual debe tener {Link_1} para usar el inicio de sesión de un solo clic)",
+			"index_10": "(El dominio actual debe tener {link_1} para usar el inicio de sesión de un solo clic)",
 			"index_11": "SSL habilitado",
 			"index_12": "Agregar correo web implementado",
 			"index_13": "Si ha usado RoundCube Webmail instalado con una implementación de un solo clic, puede agregarlo aquí",
@@ -522,6 +522,12 @@
 				"open": "Abrir",
 				"configurationParameters": "Parámetros de configuración",
 				"active": "Activo",
+				"conflictTitle": "Conflicto en el entorno de instalación",
+				"conflictAlertTitle": "Se detectaron conflictos de puertos",
+				"conflictAlertDescription": "Los siguientes puertos están ocupados por otras aplicaciones. Resuelve los conflictos e inténtalo de nuevo.",
+				"checkInstallFailed": "La comprobación del entorno de instalación falló. Revisa el entorno del servidor e inténtalo de nuevo.",
+				"conflictOccupied": "Ocupado",
+				"conflictProcess": "Proceso",
 				"successTip": "Abra la consola de BillionMail después de la instalación y complete la configuración del dominio, DNS y verificación del remitente."
 			}
 		}

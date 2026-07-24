@@ -1142,8 +1142,85 @@ class panelPlugin:
                 break
         return True
 
+    # Keep card-style software list priority independent from get_soft_list.
+    def __sort_soft_list_for_card(self, soft_list):
+        fixed_order = [
+            'nginx',
+            'apache',
+            'mysql',
+            'redis',
+            'phpmyadmin',
+            'php-8.3',
+            'php-8.4',
+            'php-8.5',
+            'pureftpd',
+            'mongodb',
+            'btwaf',
+            'tamper_core',
+            'btapp',
+            'security_notice',
+            'btwaf_httpd',
+            'tamper_proof',
+            'rsync',
+            'users',
+            'networkscan',
+            'bt_report',
+        ]
+        fixed_index = {name: index for index, name in enumerate(fixed_order)}
+        fixed_items = []
+        other_items = []
+        for soft_info in soft_list:
+            name = soft_info.get('name', '')
+            if name in fixed_index:
+                fixed_items.append(soft_info)
+            else:
+                other_items.append(soft_info)
+        fixed_items.sort(key=lambda item: fixed_index.get(item.get('name', ''), len(fixed_order)))
+        return fixed_items + other_items
+
+    # Get software list for card-style display.
+    def get_soft_list_card(self, get=None):
+        if get is None:
+            get = public.dict_obj()
+
+        original_p = get.get('p', 1) if hasattr(get, 'get') else getattr(get, 'p', 1)
+        original_row = get.get('row', self.ROWS) if hasattr(get, 'get') else getattr(get, 'row', self.ROWS)
+        original_skip_check_status = getattr(self, '_card_skip_check_status', False)
+        card_skip_check_status = str(get.get('type', '0')) != '-1' if hasattr(get, 'get') else str(getattr(get, 'type', '0')) != '-1'
+
+        get.p = 1
+        get.row = 100000
+        self._card_skip_check_status = card_skip_check_status
+        try:
+            result = self.get_soft_list(get)
+        finally:
+            get.p = original_p
+            get.row = original_row
+            self._card_skip_check_status = original_skip_check_status
+
+        if result.get('status', -1) == -1:
+            return result
+
+        softList = result.get('message', {})
+        if not isinstance(softList, dict) or 'list' not in softList:
+            return result
+
+        list_info = softList['list']
+        if isinstance(list_info, dict):
+            data = list_info.get('data', [])
+            softList['list'] = self.get_page(self.__sort_soft_list_for_card(data), get)
+            if card_skip_check_status:
+                softList['list']['data'] = self.check_isinstall(softList['list']['data'])
+        elif isinstance(list_info, list):
+            softList['list'] = self.__sort_soft_list_for_card(list_info)
+        public.set_module_logs('panel_plugin', 'get_soft_list_card')
+        return public.return_message(0, 0, softList)
+
     #取软件列表
     def get_soft_list(self,get = None):
+        if 'query' in get:
+            get.query = get.query.strip()
+            public.set_search_history("get_soft_list", "get_soft_list", get.query)
         softList = self.get_cloud_list(get)
         if not softList:
             get.force = 1
@@ -1163,7 +1240,8 @@ class panelPlugin:
             softList['list'] = self.get_page(softList['list'],get)
         else:
             softList['list'] = self.get_page(softList['list'],get)
-            softList['list']['data'] = self.check_isinstall(softList['list']['data'])
+            if not getattr(self, '_card_skip_check_status', False):
+                softList['list']['data'] = self.check_isinstall(softList['list']['data'])
         softList['apache22'] = False
         softList['apache24'] = False
         check_version_path = '/www/server/apache/version_check.pl'
@@ -1198,7 +1276,7 @@ class panelPlugin:
                     "ps": "The toolkit specifically designed for Wordpress management provided by aaPanel <a class='btlink' href='/wp/toolkit'>>>Go</a>",
                 }
             )
-
+        softList['search_history'] = public.get_search_history("get_soft_list", "get_soft_list")
         return public.return_message(0, 0,  softList)
 
     #取首页软件列表

@@ -313,7 +313,7 @@
 			"index_45": "Marque de certificat",
 			"index_46": "Domaine de certificat (s)",
 			"index_47": "Expiré",
-			"index_48": "{Date}, Exp in {Days} Days",
+			"index_48": "{date}, Exp in {days} Days",
 			"index_49": "Forcer https",
 			"index_50": "Clé privée (clé)",
 			"index_51": "Certificat (CRT / PEM)",

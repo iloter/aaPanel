@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import glob
 from datetime import datetime
 
 if "/www/server/panel/class" not in sys.path:
@@ -24,6 +25,18 @@ class SecureManage(SSHbase):
             self.ssh_log_path = "/var/log/secure"
         else:
             self.ssh_log_path = "/var/log/message"
+
+    def get_secure_log_files(self):
+        log_files = glob.glob(self.ssh_log_path)
+        if not log_files and os.path.isfile(self.ssh_log_path):
+            log_files = [self.ssh_log_path]
+        return [
+            log_file for log_file in log_files
+            if os.path.isfile(log_file) and not log_file.endswith('.gz')
+        ]
+
+    def has_secure_log_files(self):
+        return len(self.get_secure_log_files()) > 0
 
     def execshell(self, commands):
         """
@@ -62,9 +75,12 @@ class SecureManage(SSHbase):
             if d in query:
                 return new_logins
 
+        if not self.has_secure_log_files():
+            return 0, new_logins
+
         if query != '':
             query = "|grep -aE '{}'".format(query)
-        commands = "ls -tr {file_path}|grep -v '\.gz$'|xargs cat|grep -aE '({login_type})'{query}| tee >(tail -n {end}|head -n {pagesize}|tac >&2)|wc -l".format(
+        commands = r"ls -tr {file_path}|grep -v '\.gz$'|xargs cat|grep -aE '({login_type})'{query}| tee >(tail -n {end}|head -n {pagesize}|tac >&2)|wc -l".format(
         file_path=self.ssh_log_path,
         login_type=login_type,
         query=query,
@@ -96,8 +112,11 @@ class SecureManage(SSHbase):
             if d in query:
                 return 0
 
+        if not self.has_secure_log_files():
+            return 0
+
         if query != '':
             query = "|grep -a '{}'".format(query)
-        commands = "ls -tr {file_path}|grep -v '\.gz$'|xargs cat|grep -aE '({login_type})'{query}|wc -l".format(file_path=self.ssh_log_path,login_type=login_type,query=query)
+        commands = r"ls -tr {file_path}|grep -v '\.gz$'|xargs cat|grep -aE '({login_type})'{query}|wc -l".format(file_path=self.ssh_log_path,login_type=login_type,query=query)
         result, err = public.ExecShell(commands)
         return int(result.strip())

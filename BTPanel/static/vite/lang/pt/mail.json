@@ -522,6 +522,12 @@
 				"open": "Abrir",
 				"configurationParameters": "Parâmetros de configuração",
 				"active": "Ativo",
+				"conflictTitle": "Conflito no ambiente de instalação",
+				"conflictAlertTitle": "Conflitos de porta detectados",
+				"conflictAlertDescription": "As portas a seguir estão ocupadas por outros aplicativos. Resolva os conflitos e tente novamente.",
+				"checkInstallFailed": "A verificação do ambiente de instalação falhou. Verifique o ambiente do servidor e tente novamente.",
+				"conflictOccupied": "Ocupada",
+				"conflictProcess": "Processo",
 				"successTip": "Abra o console BillionMail após a instalação e conclua as configurações de domínio, DNS e verificação do remetente."
 			}
 		}

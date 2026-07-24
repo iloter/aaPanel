@@ -182,7 +182,7 @@
 			"index_43": "Harap tutup dan kosongkan cache sebelum mengaktifkan mode pemeliharaan.",
 			"index_44": "Catatan: Untuk menghindari penurunan peringkat situs web oleh mesin pengindeksan, mohon jangan mengaktifkan mode pemeliharaan dalam waktu lama.",
 			"index_45": "Merekomendasikan untuk mengunggah file HTML untuk templat, dan menggunakan URL data untuk file templat statis.",
-			"index_46": "Jika Anda ingin templat Anda menggunakan fungsi konfigurasi templat aapanel, Anda bisa memulai mode pemeliharaan satu kali dan memodifikasi file /wp-content/mintensionce/mintensione-template.html, dengan tetap mempertahankan placeholder '{{}}'."
+			"index_46": "Jika Anda ingin templat Anda menggunakan fungsi konfigurasi templat aapanel, Anda bisa memulai mode pemeliharaan satu kali dan memodifikasi file /wp-content/mintensionce/mintensione-template.html, dengan tetap mempertahankan placeholder {'{'}{'{'}{'}'}{'}'}."
 		},
 		"Label": {
 			"index_1": "Setel ulang kata sandi",

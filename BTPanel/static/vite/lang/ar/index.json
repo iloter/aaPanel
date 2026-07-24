@@ -660,5 +660,14 @@
 	"Security & Privacy": "Security & Privacy",
 	"No packages available": "No packages available",
 	"Quota Recharge": "Quota Recharge",
-	"AI Settings": "AI Settings"
+	"AI Settings": "AI Settings",
+	"Multiple executions": "Multiple executions",
+	"All execution times": "All execution times",
+	"Add execution time": "Add execution time",
+	"First": "First",
+	"Execution time": "Execution time",
+	"Successfully added {0} tasks": "Successfully added {0} tasks",
+	"Added {0} tasks, {1} failed": "Added {0} tasks, {1} failed",
+	"Failed to add {0} tasks": "Failed to add {0} tasks",
+	"Saved {0} execution times": "Saved {0} execution times"
 }

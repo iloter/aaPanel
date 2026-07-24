@@ -18,7 +18,7 @@
 		"index_13": "Tên người dùng",
 		"index_14": "Mật khẩu",
 		"index_15": {
-			"index_1": "Nhận Passwd không thành công, nhấp vào {lỗi}!",
+			"index_1": "Nhận Passwd không thành công, nhấp vào {error}!",
 			"index_2": "cài lại"
 		},
 		"index_16": "Hỗ trợ",

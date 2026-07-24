@@ -3525,96 +3525,122 @@ var soft = {
 				}
 				break;
 			case 'set_php_config':
-				if (!obj.notLoading) var loading = bt.load(lan.public.the);
-				bt.soft.php.get_config(version, function (rdata) {
-					if (!obj.notLoading) loading.close();
-					obj.notLoading = false;
-					var divObj = document.getElementById('phpextdiv');
-					var scrollTopNum = 0;
-					if (divObj) scrollTopNum = divObj.scrollTop;
-
-					$('.soft-man-con')
-						.empty()
-						.append(
-							'<div class="divtable" id="phpextdiv" style="height: 478px; overflow: auto;padding-bottom: 1px;margin-bottom: 25px;"><table id="tab_phpext" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></div></div>'
-						);
-
-					var list = [];
-					for (var i = 0; i < rdata.libs.length; i++) {
-						if (rdata.libs[i].versions.indexOf(version) == -1) continue;
-						list.push(rdata.libs[i]);
-					}
-					var _tab = bt.render({
-						table: '#tab_phpext',
-						data: list,
-						columns: [
-							{
-								field: 'name',
-								title: lan.soft.php_ext_name,
-							},
-							{
-								field: 'type',
-								title: lan.soft.php_ext_type,
-								width: 64,
-							},
-							{
-								field: 'msg',
-								title: lan.soft.php_ext_ps,
-							},
-							{
-								field: 'status',
-								title: lan.soft.php_ext_status,
-								width: 40,
-								templet: function (item) {
-									return '<span class="ico-' + (item.status ? 'start' : 'stop') + ' glyphicon glyphicon-' + (item.status ? 'ok' : 'remove') + '"></span>';
-								},
-							},
-							{
-								field: 'opt',
-								title: lan.public.action,
-								width: 60,
-								templet: function (item) {
-									var opt = '<a class="btlink lib-install" data-name="' + item.name + '" data-title="' + item.title + '"  href="javascript:;">' + lan.soft.install + '</a>';
-									if (item['task'] == '-1' && item.phpversions.indexOf(version) != -1) {
-										opt = '<a style="color:green;" href="javascript:messagebox();">' + lan.soft.the_install + '</a>';
-									} else if (item['task'] == '0' && item.phpversions.indexOf(version) != -1) {
-										opt = '<a style="color:#C0C0C0;" href="javascript:messagebox();">' + lan.soft.sleep_install + '</a>';
-									} else if (item.status) {
-										opt = '<a style="color:red;" data-name="' + item.name + '" data-title="' + item.title + '" class="lib-uninstall" href="javascript:;">' + lan.soft.uninstall + '</a>';
-									}
-									return opt;
-								},
-							},
-						],
+				$('.soft-man-con')
+    				.empty()
+    				.append('<div class="tootls_group tootls_top" style="margin-bottom: 12px;"><div class="pull-left"><div class="bt_search"><input type="text" class="search_input" placeholder="Please enter Name"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></div></div><div class="pull-right"><button id="refresh_config" class="btn btn-default btn-sm">Refresh List</button></div></div>')
+    				.append('<div class="divtable" id="phpextdiv" style="height: 450px; overflow: auto;padding-bottom: 1px;margin-bottom: 16px;"></div>');
+					
+			    var helps = [lan.soft.php_plug_tips1, lan.soft.php_plug_tips2];
+				$('.soft-man-con').append(bt.render_help(helps));
+    			
+    			function getPhpConfigTable (search, notLoading) {
+    			    if (!notLoading) var loading = bt.load(lan.public.the);
+    			    
+    			    bt.soft.php.search_config(version, search, function (rdata) {
+    			        
+    					if (!notLoading) loading.close();
+    					
+    					var divObj = document.getElementById('phpextdiv');
+    					var scrollTopNum = 0;
+    					if (divObj) scrollTopNum = divObj.scrollTop;
+    
+    					$('#phpextdiv').empty().append('<table id="tab_phpext" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></table>');
+    
+    					var list = [];
+    					for (var i = 0; i < rdata.libs.length; i++) {
+    						if (rdata.libs[i].versions.indexOf(version) == -1) continue;
+    						list.push(rdata.libs[i]);
+    					}
+    					var _tab = bt.render({
+    						table: '#tab_phpext',
+    						data: list,
+    						columns: [
+    							{
+    								field: 'name',
+    								title: lan.soft.php_ext_name,
+    							},
+    							{
+    								field: 'type',
+    								title: lan.soft.php_ext_type,
+    								width: 64,
+    							},
+    							{
+    								field: 'msg',
+    								title: lan.soft.php_ext_ps,
+    							},
+    							{
+    								field: 'status',
+    								title: lan.soft.php_ext_status,
+    								width: 40,
+    								templet: function (item) {
+    									return '<span class="ico-' + (item.status ? 'start' : 'stop') + ' glyphicon glyphicon-' + (item.status ? 'ok' : 'remove') + '"></span>';
+    								},
+    							},
+    							{
+    								field: 'opt',
+    								title: lan.public.action,
+    								width: 60,
+    								templet: function (item) {
+    									var opt = '<a class="btlink lib-install" data-name="' + item.name + '" data-title="' + item.title + '"  href="javascript:;">' + lan.soft.install + '</a>';
+    									if (item['task'] == '-1' && item.phpversions.indexOf(version) != -1) {
+    										opt = '<a style="color:green;" href="javascript:messagebox();">' + lan.soft.the_install + '</a>';
+    									} else if (item['task'] == '0' && item.phpversions.indexOf(version) != -1) {
+    										opt = '<a style="color:#C0C0C0;" href="javascript:messagebox();">' + lan.soft.sleep_install + '</a>';
+    									} else if (item.status) {
+    										opt = '<a style="color:red;" data-name="' + item.name + '" data-title="' + item.title + '" class="lib-uninstall" href="javascript:;">' + lan.soft.uninstall + '</a>';
+    									}
+    									return opt;
+    								},
+    							},
+    						],
+    					});
+    					
+    					var divObj = document.getElementById('phpextdiv');
+					    if (divObj) divObj.scrollTop = scrollTopNum;
+					    
+					    $('#phpextdiv a').click(function () {
+    						var _obj = $(this);
+    						if (_obj.hasClass('lib-uninstall')) {
+    							bt.soft.php.un_install_php_lib(version, _obj.attr('data-name'), _obj.attr('data-title'), function (rdata) {
+    								setTimeout(function () {
+    								    var search = $('.soft-man-con .bt_search .search_input').val();
+    									getPhpConfigTable(search);
+    								}, 1000);
+    							});
+    						} else if (_obj.hasClass('lib-install')) {
+    							bt.soft.php.install_php_lib(version, _obj.attr('data-name'), _obj.attr('data-title'), function (rdata) {
+    								setTimeout(function () {
+    									var search = $('.soft-man-con .bt_search .search_input').val();
+    									getPhpConfigTable(search);
+    								}, 1000);
+    							});
+    						}
+    					});
+    			    });
+    			}
+    			
+    			getPhpConfigTable('');
+    			
+    			setTimeout(function() {
+    			    $('.soft-man-con .bt_search .search_input').keypress(function (e) {
+    				    if (e.which === 13) {
+    				        var search = $(this).val();
+    				        getPhpConfigTable(search);
+    				    }
+    				});
+    				
+    				
+    				$('.soft-man-con .bt_search .glyphicon-search').click(function () {
+					    var search = $(this).prev().val();
+					    getPhpConfigTable(search);
 					});
-					var helps = [lan.soft.php_plug_tips1, lan.soft.php_plug_tips2];
-					$('.soft-man-con').append(bt.render_help(helps));
-
-					var divObj = document.getElementById('phpextdiv');
-					if (divObj) divObj.scrollTop = scrollTopNum;
-					$('a').click(function () {
-						var _obj = $(this);
-						if (_obj.hasClass('lib-uninstall')) {
-							bt.soft.php.un_install_php_lib(version, _obj.attr('data-name'), _obj.attr('data-title'), function (rdata) {
-								setTimeout(function () {
-									soft.get_tab_contents('set_php_config', obj);
-								}, 1000);
-							});
-						} else if (_obj.hasClass('lib-install')) {
-							bt.soft.php.install_php_lib(version, _obj.attr('data-name'), _obj.attr('data-title'), function (rdata) {
-								setTimeout(function () {
-									soft.get_tab_contents('set_php_config', obj);
-								}, 1000);
-							});
-						}
+					
+					$('#refresh_config').click(function () {
+					    var search = $('.soft-man-con .bt_search .search_input').val();
+					    getPhpConfigTable(search);
 					});
-					setTimeout(function () {
-						if ($('.bt-soft-menu .bgw').text() === 'Install extensions') {
-							obj.notLoading = true;
-							soft.get_tab_contents('set_php_config', obj);
-						}
-					}, 3000);
-				});
+    			}, 500);
+    			
 				break;
 			case 'get_phpinfo':
 				var con = '';

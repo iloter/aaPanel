@@ -25,13 +25,30 @@ import public
 from public.regexplib import match_ipv4,match_ipv6
 from safeModelV2.base import safeBase
 
-# from pyroute2 import IPSet, NetlinkError
+def _install_pyroute2():
+    script_file = '{}/script/install_pyroute2.sh'.format(public.get_panel_path())
+    try:
+        if os.path.exists(script_file):
+            public.ExecShell("bash {}".format(script_file))
+        else:
+            public.ExecShell("btpip install pyroute2")
+    except Exception as e:
+        public.print_log("install pyroute2 error:", str(e))
 
-try:
-    from pyroute2 import IPSet, NetlinkError
-except:
-    public.ExecShell("btpip install pyroute2")
-    from pyroute2 import IPSet, NetlinkError
+
+def _get_pyroute2():
+    try:
+        from pyroute2 import IPSet, NetlinkError
+        return IPSet, NetlinkError
+    except:
+        _install_pyroute2()
+
+    try:
+        from pyroute2 import IPSet, NetlinkError
+        return IPSet, NetlinkError
+    except Exception as e:
+        public.print_log("import pyroute2 error:", str(e))
+        return None, None
 
 
 class main(safeBase):
@@ -94,7 +111,9 @@ class main(safeBase):
         # except:pass
 
 
-        from pyroute2 import IPSet, NetlinkError
+        IPSet, NetlinkError = _get_pyroute2()
+        if not IPSet or not NetlinkError:
+            return False
         import socket
 
         try:

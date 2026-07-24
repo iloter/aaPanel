@@ -379,7 +379,7 @@
 			"index_79": "Ziehen Sie den gesamten IP -Bereich?",
 			"index_80": "Nach dem Hinzufügen zur URL -Whitelist wird diese URL nicht mehr verteidigt. Möchten Sie den Betrieb fortsetzen? ",
 			"index_81": "Möchten Sie einen URI -Parameter -Whitelist hinzufügen?",
-			"index_82": "Möchten Sie der IP -Blacklist {IP} hinzufügen?"
+			"index_82": "Möchten Sie der IP -Blacklist {ip} hinzufügen?"
 		},
 		"Rules": {
 			"index_1": "IP Whitelist",

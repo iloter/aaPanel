@@ -200,7 +200,7 @@
 			"index_74": "文件類型:txt/json 每行一個郵箱 不超過5 MB",
 			"index_75": "導入聯繫人",
 			"index_76": "更改列表",
-			"index_77": "您確定要從此郵箱 {0} {1} 嗎？",
+			"index_77": "您確定要從此郵箱 {0} 嗎？",
 			"index_78": "您確定要刪除此 {0} 郵件嗎？",
 			"index_79": "批量訂閱",
 			"index_80": "請小心確認所選項 [訂閱]",
@@ -522,6 +522,12 @@
 				"open": "開啟",
 				"configurationParameters": "設定參數",
 				"active": "已啟用",
+				"conflictTitle": "安裝環境衝突",
+				"conflictAlertTitle": "偵測到連接埠占用",
+				"conflictAlertDescription": "以下連接埠已被其他應用程式占用，請處理連接埠衝突後重試。",
+				"checkInstallFailed": "安裝環境檢測失敗，請檢查伺服器環境後重試。",
+				"conflictOccupied": "已占用",
+				"conflictProcess": "處理程序",
 				"successTip": "安裝後開啟 BillionMail 控制台，完成網域、DNS 和寄件者驗證設定。"
 			}
 		}

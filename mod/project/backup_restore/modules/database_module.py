@@ -54,10 +54,19 @@ class DatabaseModule(DataManager):
         self.pgsql_table_data_exist = True
 
     def get_database_backup_conf(self, timestamp=None):
+        database_ids = ["ALL"]
+        if timestamp is not None:
+            backup_conf = self.get_backup_conf(str(timestamp))
+            if backup_conf:
+                database_ids = self.normalize_backup_id_list(backup_conf.get("database_id"))
+
         mysql_data = public.M('databases').select()
         db_list = []
+        database_id_set = set(str(database_id) for database_id in database_ids)
         with app.app_context():
             for data in mysql_data:
+                if "ALL" not in database_ids and str(data.get('id')) not in database_id_set:
+                    continue
                 try:
                     real_access = database.database().GetDatabaseAccess(
                         public.to_dict_obj({'name': data['name']})
@@ -89,7 +98,8 @@ class DatabaseModule(DataManager):
                 }
                 db_list.append(db_info)
 
-        if os.path.exists("/www/server/redis/src/redis-server") and os.path.exists("/www/server/redis/version.pl"):
+        include_redis = "ALL" in database_ids or "0" in database_id_set or "redis" in database_id_set
+        if include_redis and os.path.exists("/www/server/redis/src/redis-server") and os.path.exists("/www/server/redis/version.pl"):
             db_info = self.get_redis_info()
             db_list.append(db_info)
         return db_list
@@ -540,8 +550,7 @@ class DatabaseModule(DataManager):
             log = public.lang(f"{name} synchronization...")
             self.print_log(log, "restore")
             # noinspection PyUnresolvedReferences
-            sync_db_user_pwd = db_client.SyncToDatabases(public.to_dict_obj({"type": 0, "ids": "[]"}))
-            public.print_log(f"sync_db_user_pwd {name}>>> {sync_db_user_pwd}")
+            db_client.SyncToDatabases(public.to_dict_obj({"type": 0, "ids": "[]"}))
             self.replace_log(log, public.lang(f"{name} synchronization completed!"), "restore")
         except Exception as e:
             public.print_log("{} sync database func error: {}".format(name, str(e)))

@@ -217,7 +217,7 @@
       "index_22": "Kötü amaçlı dosyalarla ilgilenme",
       "index_23": "OSS Taraması",
       "index_24": "OSS bağlama dizinlerinin taranmasını etkinleştir",
-      "index_25": "Otomatik engelleme anahtarı",
+      "index_25": "Dosyaları karantinaya al",
       "index_26": "Dinamik Durdurma Anahtarı",
       "index_27": "Mevcut sistem OSS dizinini bağlamıyor, bu nedenle OSS taraması etkinleştirilemez",
       "index_28": "Dinamik durdurmayı etkinleştir",
@@ -298,6 +298,7 @@
     "systemRestartReminder": "System Restart Reminder",
     "serverRestartedAt": "Your server restarted at {time}.",
     "iKnow": "I Know",
+    "memoEmpty": "Mevcut içerik boş, düzenlemek için tıklayın",
     "SiteGuide": {
       "common": {
         "back": "Geri",
@@ -323,7 +324,7 @@
         "description": "Dakikalar içinde ilk projenizi kurun.",
         "softwarePage": "Yazılım sayfası",
         "lastConfig": "Last config: ",
-        "skipWizard": "Sihirbazı atla",
+        "skipWizard": "Atla",
         "options": {
           "wordpress": {
             "title": "WordPress sitesi oluştur",

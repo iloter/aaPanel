@@ -1031,6 +1031,7 @@ echo "[INFO] Starting upgrade..."
 $PY_BIN -u $SCRIPT_PATH upgrade_panel ${{VERSION}} ${{IS_PRO}} 2>&1
 echo "[INFO] Upgrade script exited with code: $?"
 
+
 # Make sure that the panel service has been started.
 echo "[INFO] Checking panel service status..."
 sleep 3
@@ -1305,6 +1306,17 @@ echo "=====================================" """
             return public.return_message(-1, 0, public.lang("Version must be numeric!"))
 
         import re,json
+        def match_php_ext_search(lib, search):
+            if not search:
+                return True
+            search_text = ' '.join([
+                str(lib.get('name', '')),
+                str(lib.get('type', '')),
+                str(lib.get('msg', '')),
+            ]).lower()
+            return search in search_text
+
+        search = str(getattr(get, 'search', '')).strip().lower()
         filename = public.GetConfigValue('setup_path') + '/php/' + get.version + '/etc/php.ini'
         if public.get_webserver() == 'openlitespeed':
             filename = '/usr/local/lsws/lsphp{}/etc/php/{}.{}/litespeed/php.ini'.format(get.version,get.version[0],get.version[1])
@@ -1371,6 +1383,7 @@ echo "=====================================" """
 
             # 过滤版本不匹配的插件
             if get.version not in lib['versions']:continue
+            if not match_php_ext_search(lib, search):continue
             libs.append(lib)
 
         data['libs'] = libs

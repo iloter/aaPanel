@@ -522,6 +522,12 @@
                 "open": "فتح",
                 "configurationParameters": "معلمات الإعداد",
                 "active": "نشط",
+                "conflictTitle": "تعارض في بيئة التثبيت",
+                "conflictAlertTitle": "تم اكتشاف منافذ مشغولة",
+                "conflictAlertDescription": "المنافذ التالية مشغولة بواسطة تطبيقات أخرى. يرجى حل تعارضات المنافذ ثم المحاولة مرة أخرى.",
+                "checkInstallFailed": "فشل فحص بيئة التثبيت. تحقق من بيئة الخادم وحاول مرة أخرى.",
+                "conflictOccupied": "مشغول",
+                "conflictProcess": "العملية",
                 "successTip": "افتح وحدة تحكم BillionMail بعد التثبيت وأكمل إعدادات النطاق وDNS والتحقق من المرسل."
             }
         }

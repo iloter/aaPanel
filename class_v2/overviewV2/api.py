@@ -28,6 +28,8 @@ class OverViewApi(OverViewBase):
     PLUGIN_DIR = os.path.join(PANEL_PATH, "plugin")
     TEMPLATE = os.path.join(PANEL_PATH, "config/overview_template.json")
     SETTING = os.path.join(PANEL_PATH, "config/overview_setting.json")
+    MEMO_MIGRATE_FLAG = os.path.join(PANEL_PATH, "config/overview_memo_migrated.pl")
+    DEFAULT_OVERVIEW_NAMES = ("sites", "ftps", "databases", "security", "memo")
 
     def __init__(self):
         overview_setting = []
@@ -40,9 +42,7 @@ class OverViewApi(OverViewBase):
             id = 0
             for temp in temp_data:
                 for option in temp.get("option", []):
-                    if option.get("name") in [
-                        "sites", "ftps", "databases", "security",
-                    ]:
+                    if option.get("name") in self.DEFAULT_OVERVIEW_NAMES:
                         option["id"] = id
                         option["template"] = temp["template"]
                         option["params"] = [
@@ -51,6 +51,43 @@ class OverViewApi(OverViewBase):
                         id += 1
                         overview_setting.append(option)
             public.writeFile(self.SETTING, json.dumps(overview_setting))
+            public.writeFile(self.MEMO_MIGRATE_FLAG, "1")
+
+    def _find_template_option(self, name: str) -> dict:
+        try:
+            temp_data = json.loads(public.readFile(self.TEMPLATE))
+        except Exception as e:
+            public.print_log(f"error read overview template: {e}")
+            return {}
+
+        for temp in temp_data:
+            for option in temp.get("option", []):
+                if option.get("name") == name:
+                    option["template"] = temp.get("template", "")
+                    return option
+        return {}
+
+    def _ensure_memo_overview(self, overview_setting: list) -> list:
+        if os.path.exists(self.MEMO_MIGRATE_FLAG):
+            return overview_setting
+        if any(item.get("name") == "memo" for item in overview_setting):
+            public.writeFile(self.MEMO_MIGRATE_FLAG, "1")
+            return overview_setting
+        if len(overview_setting) >= 6:
+            return overview_setting
+
+        memo_option = self._find_template_option("memo")
+        if not memo_option:
+            return overview_setting
+
+        memo_option["id"] = max([int(item.get("id", 0)) for item in overview_setting] + [-1]) + 1
+        memo_option["params"] = [
+            p["option"][0] for p in memo_option.get("params", []) if p.get("option")
+        ]
+        overview_setting.append(memo_option)
+        public.writeFile(self.SETTING, json.dumps(overview_setting))
+        public.writeFile(self.MEMO_MIGRATE_FLAG, "1")
+        return overview_setting
 
     def _check_plugin_install(self, overview: dict):
         if overview.get("type") == "plugin":
@@ -153,6 +190,7 @@ class OverViewApi(OverViewBase):
             public.print_log("get_overview error info: {}".format(ex))
             public.ExecShell("rm -f {}".format(self.SETTING))
             overview_setting = []
+        overview_setting = self._ensure_memo_overview(overview_setting)
 
         func_dict = {
             "sites": self._base,
@@ -166,6 +204,7 @@ class OverViewApi(OverViewBase):
             "monitor": self._monitor,
             "tamper_core": self._tamper_core,
             "alarm_logs": self._alarm_logs,
+            "memo": self._memo,
         }
 
         nlist = []

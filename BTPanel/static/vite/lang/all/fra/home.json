@@ -268,5 +268,6 @@
 	"9dd90affd6244a7fc2f09dc8fb7a0551": "Utilisation inode",
 	"018ccdfebb8ff4dc11a799ebe74b0356": "Rappel de redémarrage du système",
 	"bef91412ee3c10079e58be2bdd757f3a": "Votre serveur a redémarré à {time}.",
-	"c5b1945a4e3808d335bcf6080f87c663": "Je sais"
+	"c5b1945a4e3808d335bcf6080f87c663": "Je sais",
+	"a3173d2d27edcf8227a96b54dd59d96f": "Le contenu actuel est vide, cliquez pour le modifier"
 }

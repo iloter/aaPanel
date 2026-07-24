@@ -44,6 +44,7 @@ class main(DataManager):
         self.migrate_task_json = self.base_path + '/migration_task.json'
         self.migrate_pl_file = self.base_path + '/migrate.pl'
         self.migrate_success_pl = self.base_path + '/migrate_success.pl'
+        self.migrage_save_data_conf = self.base_path + '/migrate_save_data_conf.json'
 
     def return_data(self, status: bool = None, msg: str = None, error_msg: str = None, data: list | dict = None):
         aa_status = 0 if status else -1
@@ -107,6 +108,19 @@ class main(DataManager):
         else:
             backup_timestamp = get_time
 
+        backup_data_value = getattr(get, "data_list", None)
+        if backup_data_value is None:
+            backup_data_value = getattr(get, "backup_data", None)
+        backup_data = self.normalize_backup_data(backup_data_value)
+        site_id = self.normalize_backup_id_list(getattr(get, "site_id", None))
+        wp_site_id_value = getattr(get, "wp_site_id", None)
+        if wp_site_id_value is None:
+            wp_site_id_value = getattr(get, "wp_id", None)
+        if wp_site_id_value is None:
+            wp_site_id_value = getattr(get, "wp_tools_id", None)
+        wp_site_id = self.normalize_backup_id_list(wp_site_id_value)
+        database_id = self.normalize_backup_id_list(getattr(get, "database_id", None))
+
         backup_conf = {
             'backup_name': get.backup_name,
             'timestamp': get_time,
@@ -126,11 +140,16 @@ class main(DataManager):
             },
             'total_time': None,
             'done_time': None,
+            'database_id': database_id,
+            'site_id': site_id,
+            'wp_site_id': wp_site_id,
+            'backup_data': backup_data,
         }
         backup_config.append(backup_conf)
         public.WriteFile(self.bakcup_task_json, json.dumps(backup_config))
 
         if backup_now:
+            self.write_initial_task_state("backup", get_time, reset_log=True)
             public.ExecShell(
                 "nohup btpython /www/server/panel/mod/project/backup_restore/backup_manager.py backup_data {} > /dev/null 2>&1 &".format(
                     int(get_time)
@@ -278,6 +297,9 @@ class main(DataManager):
         if os.path.exists(self.restore_pl_file):
             public.ExecShell("rm -f {}".format(self.restore_pl_file))
 
+        self.clear_initial_task_state("backup")
+        self.clear_initial_task_state("restore")
+
         try:
             task_json_data = json.loads(public.ReadFile(self.bakcup_task_json))
             for item in task_json_data:
@@ -312,12 +334,74 @@ class main(DataManager):
         if not hasattr(get, "timestamp"):
             return self.return_data(False, public.lang("Parameter error"), public.lang("Parameter error"))
         timestamp = get.timestamp
+        self.write_initial_task_state("backup", timestamp, reset_log=True)
         public.ExecShell(
             "nohup btpython /www/server/panel/mod/project/backup_restore/backup_manager.py backup_data {} > /dev/null 2>&1 &".format(
                 int(timestamp)
             )
         )
         return self.return_data(True, public.lang("Executed successfully"), public.lang("Executed successfully"))
+
+    @staticmethod
+    def _has_request_attr(get, key):
+        if not hasattr(get, key):
+            return False
+        try:
+            value = getattr(get, key)
+        except:
+            return False
+        return value is not None
+
+    def _build_restore_selection(self, get):
+        restore_data_value = None
+        for key in ("data_list", "restore_data", "backup_data"):
+            if self._has_request_attr(get, key):
+                restore_data_value = getattr(get, key)
+                break
+
+        restore_selection = {}
+        if restore_data_value is not None:
+            restore_selection["backup_data"] = self.normalize_backup_data(restore_data_value)
+
+        list_params = {
+            "site_id": "site_id",
+            "wp_site_id": "wp_site_id",
+            "wp_id": "wp_site_id",
+            "wp_tools_id": "wp_site_id",
+            "database_id": "database_id",
+        }
+        for request_key, save_key in list_params.items():
+            if self._has_request_attr(get, request_key):
+                restore_selection[save_key] = self.normalize_backup_id_list(getattr(get, request_key))
+
+        return restore_selection
+
+    def _restore_backup_available(self, timestamp, backup_conf=None):
+        timestamp = str(timestamp)
+        if not os.path.exists(self.base_path):
+            return False
+
+        backup_dir = os.path.join(self.base_path, "{}_backup".format(timestamp))
+        if os.path.exists(os.path.join(backup_dir, "backup.json")):
+            return True
+
+        backup_file_suffix = "{}_backup.tar.gz".format(timestamp)
+        try:
+            if any(file_name.endswith(backup_file_suffix) for file_name in os.listdir(self.base_path)):
+                return True
+        except Exception:
+            pass
+
+        if isinstance(backup_conf, dict):
+            backup_file = backup_conf.get("backup_file")
+            if backup_file and os.path.exists(backup_file):
+                return True
+
+            backup_path = backup_conf.get("backup_path")
+            if backup_path and os.path.exists(os.path.join(backup_path, "backup.json")):
+                return True
+
+        return False
 
     def add_restore(self, get=None):
         """
@@ -346,7 +430,36 @@ class main(DataManager):
                 pass
 
         timestamp = get.timestamp
+        try:
+            BackupManager().get_local_backup()
+        except Exception as ex:
+            public.print_log("refresh local backup before restore error: {}".format(str(ex)))
 
+        backup_conf = self.get_backup_conf(str(timestamp))
+        if not backup_conf:
+            return self.return_data(False, error_msg="Backup task does not exist")
+        if backup_conf.get("backup_status") == 1:
+            return self.return_data(False, error_msg="Backup task is not completed")
+        if not self._restore_backup_available(timestamp, backup_conf):
+            return self.return_data(False, error_msg="Backup file does not exist")
+
+        restore_selection = self._build_restore_selection(get)
+        restore_select_file = "{}/{}_restore_select.json".format(self.base_path, timestamp)
+        if restore_selection:
+            backup_conf["restore_selection"] = restore_selection
+            self.save_backup_conf(str(timestamp), backup_conf)
+            public.WriteFile(restore_select_file, json.dumps(restore_selection))
+        else:
+            if "restore_selection" in backup_conf:
+                backup_conf.pop("restore_selection", None)
+                self.save_backup_conf(str(timestamp), backup_conf)
+            if os.path.exists(restore_select_file):
+                try:
+                    os.remove(restore_select_file)
+                except:
+                    pass
+
+        self.write_initial_task_state("restore", timestamp, reset_log=True)
         public.ExecShell(
             "nohup btpython /www/server/panel/mod/project/backup_restore/restore_manager.py restore_data {} {} > /dev/null 2>&1 &".format(
                 int(timestamp), int(get.force_restore)
@@ -440,6 +553,25 @@ class main(DataManager):
         else:
             key_file = None
 
+        backup_data_value = getattr(get, "backup_data", None)
+        if backup_data_value is None:
+            backup_data_value = getattr(get, "data_list", None)
+        backup_data = self.normalize_backup_data(backup_data_value)
+        site_id = self.normalize_backup_id_list(getattr(get, "site_id", None))
+        wp_site_id_value = getattr(get, "wp_site_id", None)
+        if wp_site_id_value is None:
+            wp_site_id_value = getattr(get, "wp_id", None)
+        if wp_site_id_value is None:
+            wp_site_id_value = getattr(get, "wp_tools_id", None)
+        wp_site_id = self.normalize_backup_id_list(wp_site_id_value)
+        database_id = self.normalize_backup_id_list(getattr(get, "database_id", None))
+        public.WriteFile(self.migrage_save_data_conf, json.dumps({
+            "backup_data": backup_data,
+            "database_id": database_id,
+            "site_id": site_id,
+            "wp_site_id": wp_site_id,
+        }))
+
         timestamp = int(time.time())
         migrate_conf = {
             'server_ip': server_ip,
@@ -455,6 +587,10 @@ class main(DataManager):
             'migrate_progress': 5,
             'migrate_msg': public.lang("Migration task initializing"),
             'task_info': None,
+            'backup_data': backup_data,
+            'database_id': database_id,
+            'site_id': site_id,
+            'wp_site_id': wp_site_id,
         }
         public.WriteFile(self.migrate_task_json, json.dumps(migrate_conf))
 
@@ -515,6 +651,7 @@ class main(DataManager):
         public.ExecShell("rm -f /www/backup/backup_restore/migrate_backup.pl")
         public.ExecShell("rm -f /www/backup/backup_restore/migration.pl")
         public.ExecShell("rm -f /www/backup/backup_restore/migrate_backup_success.pl")
+        public.ExecShell("rm -f /www/backup/backup_restore/migrate_save_data_conf.json")
         if os.path.exists(self.migrate_task_json):
             public.ExecShell("rm -f {}".format(self.migrate_task_json))
             return self.return_data(True, public.lang("Task stopped successfully"), None, None)

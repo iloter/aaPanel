@@ -225,6 +225,11 @@
       "index_7": "打开SSH服务",
       "index_8": "您确定打开SSH服务吗？",
       "index_9": "关闭SSH服务还将注销所有已记录的用户，继续吗？",
+      "index_10": "SSH系统账号管理",
+      "overview_service": "SSH服务",
+      "overview_enabled": "SSH服务已启用",
+      "overview_disabled": "SSH服务已禁用",
+      "overview_current_status": "当前状态：",
       "Basic": {
         "index_1": "SSH密码登录",
         "index_2": "SSH密钥登录",
@@ -269,6 +274,42 @@
           "whitelist_2": "IP"
         }
       },
+      "Account": {
+        "create": "创建系统用户",
+        "conversion_title": "SSH系统账号管理-功能介绍",
+        "overview": "概览",
+        "feature_modify_password": "修改系统用户密码",
+        "feature_delete_user": "删除系统用户",
+        "feature_anti_intrusion": "防入侵",
+        "username": "用户名",
+        "protection": "防提权",
+        "log": "记录日志",
+        "remark": "备注",
+        "command_log": "命令日志",
+        "reset_password": "重置密码",
+        "create_title": "创建系统用户",
+        "reset_title": "重置用户密码：{0}",
+        "password": "密码",
+        "new_password": "新密码",
+        "username_placeholder": "请输入用户名",
+        "password_placeholder": "请输入密码",
+        "username_invalid": "用户名长度必须为2-20个字符，且只能包含字母和数字，不允许使用特殊字符",
+        "password_min": "密码长度不能少于8位",
+        "delete_title": "删除用户：{0}",
+        "delete_content": "删除系统用户后，该用户将无法继续登录服务器，此操作不可恢复。",
+        "confirm_delete": "确认删除",
+        "tip_1": "开启防提权后，系统会限制该用户执行的高风险命令，并记录操作。",
+        "tip_2": "关闭防提权后，系统仅记录和跟踪该用户执行过的命令。",
+        "tip_3": "当前防提权默认针对 www、redis、mysql 等用户引起的提权风险。",
+        "plugin_missing": "需要安装堡塔防入侵插件后才能管理SSH系统账号",
+        "install_plugin": "安装插件",
+        "professional_only": "专业版专属功能",
+        "professional_desc": "SSH系统账号管理通常涉及到在服务器上创建、删除和管理SSH用户账户的过程。这些账户可以用于通过SSH（安全壳层）协议远程访问服务器。这种管理工作通常由系统管理员进行，以确保只有授权的用户可以访问服务器。",
+        "upgrade": "立即升级",
+        "no_logs": "当前暂无命令日志",
+        "api_create": "正在创建系统用户，请稍候...",
+        "api_delete": "正在删除系统用户，请稍候..."
+      },
       "Logs": {
         "index_1": "全部",
         "index_2": "成功",
@@ -286,7 +327,37 @@
         "index_14": "登录成功",
         "index_15": "登录失败",
         "free_1": "SSH登录日志",
-        "free_2": "记录并查看SSH登录日志"
+        "free_2": "记录并查看SSH登录日志",
+        "ban_brute_force": "一键封禁爆破IP",
+        "export_logs": "导出日志",
+        "clear_logs": "清理登录日志",
+        "scheduled_ban": "定时封禁",
+        "history_all": "全部时间",
+        "history_7_days": "近7天",
+        "manual_ban_title": "一键封禁爆破IP",
+        "auto_ban_title": "自动封禁爆破IP",
+        "period": "周期",
+        "schedule": "定时",
+        "failure_count": "失败次数",
+        "ban_duration": "封禁时间",
+        "hours": "小时",
+        "times": "次",
+        "manual_ban_desc": "最近{hour}小时失败超过{count}次的IP，封禁{banHour}小时。",
+        "auto_ban_desc": "每{hour}小时执行，封禁最近{hour}小时失败超过{count}次的IP {banHour}小时。",
+        "ban_rule_tip": "封禁IP可在安全-IP规则中查看。",
+        "positive_integer": "请输入正整数",
+        "task_log": "任务日志",
+        "waiting_task_log": "正在等待任务日志...",
+        "disable_scheduled_title": "关闭定时封禁",
+        "disable_scheduled_content": "关闭后定时封禁任务将不再执行，是否继续？",
+        "clear_title": "清理登录日志",
+        "clear_content": "即将清理所有SSH登录日志，是否继续？",
+        "export_type": "日志类型",
+        "export_count": "导出条数",
+        "all_logs": "所有日志",
+        "success_logs": "成功日志",
+        "failed_logs": "失败日志",
+        "operation_failed": "操作失败"
       },
       "Api": {
         "index_1": "正在设置SSH服务，请稍候...",
@@ -299,7 +370,12 @@
         "index_8": "正在处理，请稍候...",
         "index_9": "正在设置登录警报，请稍候...",
         "index_10": "正在添加IP白名单，请稍候...",
-        "index_11": "正在删除IP白名单，请稍候..."
+        "index_11": "正在删除IP白名单，请稍候...",
+        "index_12": "正在一键封禁爆破IP，请稍候...",
+        "index_13": "正在添加自动封禁任务，请稍候...",
+        "index_14": "正在关闭自动封禁任务，请稍候...",
+        "index_15": "正在导出SSH登录日志，请稍候...",
+        "index_16": "正在清理SSH登录日志，请稍候..."
       }
     },
     "Tabs": {
@@ -636,6 +712,156 @@
             "desc": "通过日志分析，挖掘访问异常与安全隐患"
           }
         }
+      }
+    },
+    "Overview": {
+      "header": {
+        "title": "安全概览",
+        "subtitle": "实时掌握服务器安全状态，及时发现并处置安全威胁",
+        "systemRunning": "系统运行中"
+      },
+      "sections": {
+        "securityScan": "安全扫描",
+        "recommendedActions": "建议操作",
+        "recentSecurityEvents": "最近安全事件",
+        "scanOverview": "扫描概览",
+        "last7Days": "最近 7 天",
+        "scanning": "正在扫描..."
+      },
+      "Api": {
+        "settingStatus": "正在设置中，请稍后..."
+      },
+      "common": {
+        "noData": "暂无数据"
+      },
+      "protection": {
+        "title": "防护状态",
+        "enabledCount": "已启用 {enabled}/{total}",
+        "confirm": {
+          "enableTitle": "开启{name}",
+          "enableContent": "确定要开启{name}吗？",
+          "disableTitle": "关闭{name}",
+          "disableContent": "确定要关闭{name}吗？"
+        },
+        "names": {
+          "firewall": "防火墙",
+          "tamperCore": "企业防篡改",
+          "ssh": "SSH 防护",
+          "btwaf": "Nginx WAF",
+          "fail2ban": "Fail2Ban"
+        },
+        "status": {
+          "enabled": "已开启",
+          "disabled": "已禁用",
+          "notInstalled": "未安装"
+        },
+        "details": {
+          "allowedPorts": "已放行端口：",
+          "portSeparator": "、",
+          "monitoringPrefix": "正在监控 ",
+          "monitoringSuffix": " 个核心文件变更",
+          "currentPort": "当前端口：",
+          "keyLogin": "密钥登录：",
+          "passwordLogin": "密码登录：",
+          "blocks": "拦截类型：",
+          "todayRequest": "今日请求：",
+          "todayMaliciousRequest": "今日恶意请求：",
+          "blockedPrefix": "累计拦截 ",
+          "bruteForceMiddle": " 次暴力破解 · 当前封禁 ",
+          "bannedIpSuffix": " 个 IP"
+        },
+        "settings": {
+          "quickAllowPorts": "快速放行端口",
+          "configureProduct": "设置 {name}",
+          "sshSettings": "SSH 设置"
+        },
+        "forms": {
+          "portNumber": "端口号"
+        },
+        "ssh": {
+          "keyLoginDesc": "允许使用密钥进行SSH登录",
+          "passwordLoginDesc": "允许使用密码进行SSH登录",
+          "keysTitle": "SSH密钥"
+        },
+        "attacks": {
+          "cc": "CC 攻击",
+          "xss": "XSS",
+          "sql": "SQL 注入"
+        }
+      },
+      "scanCards": {
+        "labels": {
+          "securityRisk": "安全风险",
+          "malwareDetection": "木马检测",
+          "websiteVulnerability": "网站漏洞",
+          "baseline": "基线检查"
+        },
+        "waitingFirstScan": "等待首次扫描",
+        "details": "详情 →",
+        "detailsAria": "{label}详情"
+      },
+      "riskLevels": {
+        "critical": "严重",
+        "high": "高危",
+        "medium": "中等",
+        "low": "低风险",
+        "normal": "正常"
+      },
+      "recommended": {
+        "emptyTitle": "暂无建议操作",
+        "emptyDesc": "完成安全扫描后，将根据检测结果自动生成建议操作",
+        "noDescription": "暂无建议说明",
+        "defaultTitle": "建议操作",
+        "badgeItems": "{count} 项",
+        "badgeZeroItems": "0 项",
+        "buttons": {
+          "fixNow": "立即处理",
+          "resolve": "去处理",
+          "review": "去检查",
+          "view": "查看"
+        }
+      },
+      "events": {
+        "title": "最近安全事件",
+        "defaultTitle": "安全事件",
+        "noEventDetails": "暂无事件详情",
+        "emptyTitle": "暂无安全事件",
+        "emptyDesc": "系统运行正常，完成安全扫描后将在此显示安全事件",
+        "allLoaded": "已获取全部安全事件",
+        "viewAll": "查看全部 →",
+        "autoRecord": "开始扫描后自动记录",
+        "filters": {
+          "all": "全部分类",
+          "info": "信息",
+          "low": "低风险",
+          "medium": "中等",
+          "high": "高危",
+          "critical": "严重",
+          "searchPlaceholder": "搜索安全事件"
+        },
+        "status": {
+          "normal": "正常",
+          "warning": "警告",
+          "blocked": "已拦截"
+        }
+      },
+      "health": {
+        "status": {
+          "scanning": "扫描中",
+          "pending": "待扫描"
+        },
+        "levels": {
+          "healthy": "健康",
+          "good": "良好",
+          "attention": "需关注",
+          "critical": "严重"
+        },
+        "scanningDesc": "正在全面扫描服务器安全状态",
+        "pleaseWait": "请稍候",
+        "lastScan": "最近扫描：{time}",
+        "notScanned": "尚未进行安全扫描",
+        "clickToStart": "点击按钮立即开始",
+        "startScan": "开始扫描"
       }
     },
     "NetworkScan": {

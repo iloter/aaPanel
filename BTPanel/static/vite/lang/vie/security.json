@@ -225,6 +225,7 @@
 			"index_7": "Bật dịch vụ SSH",
 			"index_8": "Bạn có chắc chắn sẽ bật dịch vụ SSH không?",
 			"index_9": "Tắt dịch vụ SSH cũng sẽ đăng xuất tất cả người dùng đã đăng nhập, tiếp tục?",
+			"index_10": "Quản lý tài khoản hệ thống SSH",
 			"Basic": {
 				"index_1": "Đăng nhập mật khẩu SSH",
 				"index_2": "Đăng nhập khóa SSH",
@@ -268,6 +269,42 @@
 					"whitelist_1": "Vui lòng nhập IP",
 					"whitelist_2": "Địa chỉ IP"
 				}
+			},
+			"Account": {
+				"create": "Tạo người dùng hệ thống",
+				"conversion_title": "Quản lý tài khoản hệ thống SSH",
+				"overview": "Tổng quan",
+				"feature_modify_password": "Đổi mật khẩu người dùng hệ thống",
+				"feature_delete_user": "Xóa người dùng hệ thống",
+				"feature_anti_intrusion": "Chống xâm nhập",
+				"username": "Tên người dùng",
+				"protection": "Bảo vệ nâng quyền",
+				"log": "Ghi nhật ký lệnh",
+				"remark": "Ghi chú",
+				"command_log": "Nhật ký lệnh",
+				"reset_password": "Đặt lại mật khẩu",
+				"create_title": "Tạo người dùng hệ thống",
+				"reset_title": "Đặt lại mật khẩu: {0}",
+				"password": "Mật khẩu",
+				"new_password": "Mật khẩu mới",
+				"username_placeholder": "Nhập tên người dùng",
+				"password_placeholder": "Nhập mật khẩu",
+				"username_invalid": "Tên người dùng phải dài từ 2 đến 20 ký tự và chỉ được chứa chữ cái và số. Không được phép sử dụng ký tự đặc biệt.",
+				"password_min": "Mật khẩu phải có ít nhất 8 ký tự",
+				"delete_title": "Xóa người dùng: {0}",
+				"delete_content": "Sau khi xóa, người dùng hệ thống này sẽ không thể đăng nhập vào máy chủ. Thao tác này không thể hoàn tác.",
+				"confirm_delete": "Xác nhận xóa",
+				"tip_1": "Khi bật bảo vệ nâng quyền, các lệnh có rủi ro cao sẽ bị hạn chế và ghi lại.",
+				"tip_2": "Khi tắt bảo vệ, các lệnh do người dùng thực thi chỉ được ghi lại và theo dõi.",
+				"tip_3": "Bảo vệ hiện tập trung vào rủi ro nâng quyền do các người dùng như www, redis và mysql gây ra.",
+				"plugin_missing": "Hãy cài đặt plugin chống xâm nhập trước khi quản lý tài khoản hệ thống SSH",
+				"install_plugin": "Cài đặt plugin",
+				"professional_only": "Tính năng phiên bản Chuyên nghiệp",
+				"professional_desc": "Quản lý tài khoản hệ thống SSH bao gồm tạo, xóa và quản lý tài khoản người dùng SSH trên máy chủ. Các tài khoản này cung cấp quyền truy cập từ xa an toàn qua SSH và thường được quản trị để đảm bảo chỉ người dùng được ủy quyền mới có thể truy cập máy chủ.",
+				"upgrade": "Nâng cấp ngay",
+				"no_logs": "Hiện không có nhật ký lệnh nào",
+				"api_create": "Đang tạo người dùng hệ thống, vui lòng chờ...",
+				"api_delete": "Đang xóa người dùng hệ thống, vui lòng chờ..."
 			},
 			"Logs": {
 				"index_1": "Tất cả",
@@ -636,6 +673,156 @@
 						"desc": "Khám phá những bất thường và rủi ro bảo mật thông qua phân tích nhật ký"
 					}
 				}
+			}
+		},
+		"Overview": {
+			"header": {
+				"title": "Security Overview",
+				"subtitle": "Monitor your server security posture and respond to threats before they impact your services.",
+				"systemRunning": "System running"
+			},
+			"sections": {
+				"securityScan": "Security Scan",
+				"recommendedActions": "Recommended Actions",
+				"recentSecurityEvents": "Recent Security Events",
+				"scanOverview": "Scan Overview",
+				"last7Days": "Last 7 days",
+				"scanning": "Scanning..."
+			},
+			"Api": {
+				"settingStatus": "Applying settings, please wait..."
+			},
+			"common": {
+				"noData": "No data yet"
+			},
+			"protection": {
+				"title": "Protection Status",
+				"enabledCount": "Enabled {enabled}/{total}",
+				"confirm": {
+					"enableTitle": "Bật {name}",
+					"enableContent": "Bạn có chắc chắn muốn bật {name} không?",
+					"disableTitle": "Tắt {name}",
+					"disableContent": "Bạn có chắc chắn muốn tắt {name} không?"
+				},
+				"names": {
+					"firewall": "Firewall",
+					"tamperCore": "Tamper-proof for Enterprise",
+					"ssh": "SSH Protection",
+					"btwaf": "Nginx WAF",
+					"fail2ban": "Fail2Ban"
+				},
+				"status": {
+					"enabled": "Enabled",
+					"disabled": "Disabled",
+					"notInstalled": "Not installed"
+				},
+				"details": {
+					"allowedPorts": "Allowed ports: ",
+					"portSeparator": ", ",
+					"monitoringPrefix": "Monitoring ",
+					"monitoringSuffix": " core files for changes",
+					"currentPort": "Current port: ",
+					"keyLogin": "Key login: ",
+					"passwordLogin": "Password login: ",
+					"blocks": "Blocks:",
+					"todayRequest": "Yêu cầu hôm nay: ",
+					"todayMaliciousRequest": "Yêu cầu độc hại hôm nay: ",
+					"blockedPrefix": "Blocked ",
+					"bruteForceMiddle": " brute-force attempts · ",
+					"bannedIpSuffix": " IPs banned"
+				},
+				"settings": {
+					"quickAllowPorts": "Quick allow ports",
+					"configureProduct": "Configure {name}",
+					"sshSettings": "SSH settings"
+				},
+				"forms": {
+					"portNumber": "Số cổng"
+				},
+				"ssh": {
+					"keyLoginDesc": "Cho phép đăng nhập SSH bằng khóa",
+					"passwordLoginDesc": "Cho phép đăng nhập SSH bằng mật khẩu",
+					"keysTitle": "Khóa SSH"
+				},
+				"attacks": {
+					"cc": "CC attacks",
+					"xss": "XSS",
+					"sql": "SQL injection"
+				}
+			},
+			"scanCards": {
+				"labels": {
+					"securityRisk": "Security Risk",
+					"malwareDetection": "Malware Detection",
+					"websiteVulnerability": "Website Vulnerability",
+					"baseline": "Baseline"
+				},
+				"waitingFirstScan": "Waiting for first scan",
+				"details": "Details →",
+				"detailsAria": "{label} details"
+			},
+			"riskLevels": {
+				"critical": "Critical",
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low",
+				"normal": "Normal"
+			},
+			"recommended": {
+				"emptyTitle": "No recommended actions",
+				"emptyDesc": "Recommended actions will be generated automatically after a security scan.",
+				"noDescription": "No recommendation details",
+				"defaultTitle": "Recommended Action",
+				"badgeItems": "{count} items",
+				"badgeZeroItems": "0 items",
+				"buttons": {
+					"fixNow": "Fix Now",
+					"resolve": "Resolve",
+					"review": "Review",
+					"view": "View"
+				}
+			},
+			"events": {
+				"title": "Recent Security Events",
+				"defaultTitle": "Security event",
+				"noEventDetails": "No event details",
+				"emptyTitle": "No security events",
+				"emptyDesc": "Your server is running normally. Security events will appear here after a scan.",
+				"allLoaded": "All security events loaded",
+				"viewAll": "View All →",
+				"autoRecord": "Events will be recorded after the first scan",
+				"filters": {
+					"all": "All categories",
+					"info": "Info",
+					"low": "Low",
+					"medium": "Medium",
+					"high": "High",
+					"critical": "Critical",
+					"searchPlaceholder": "Search security events"
+				},
+				"status": {
+					"normal": "Normal",
+					"warning": "Warning",
+					"blocked": "Blocked"
+				}
+			},
+			"health": {
+				"status": {
+					"scanning": "Scanning",
+					"pending": "Not scanned"
+				},
+				"levels": {
+					"healthy": "Healthy",
+					"good": "Good",
+					"attention": "Needs Attention",
+					"critical": "Critical"
+				},
+				"scanningDesc": "Running a full server security scan",
+				"pleaseWait": "Please wait",
+				"lastScan": "Last scan: {time}",
+				"notScanned": "No security scan has been run yet.",
+				"clickToStart": "Click Start Scan to begin.",
+				"startScan": "Start Scan"
 			}
 		},
 		"NetworkScan": {

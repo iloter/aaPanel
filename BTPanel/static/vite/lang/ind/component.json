@@ -149,7 +149,7 @@
 			"index_1": "Lebih banyak konfigurasi, klik untuk dilihat"
 		},
 		"Confirm": {
-			"manualInputVerification": "Silakan masukkan \"{text}\" untuk mengonfirmasi",
+			"manualInputVerification": "Silakan masukkan \"{text_}\" untuk mengonfirmasi",
 			"index_2": "Kesalahan masukan, coba lagi",
 			"index_3": "{0} selesai! Total {1} ​​item, {2} berhasil, {3} gagal.",
 			"index_4": "Hasil: ",

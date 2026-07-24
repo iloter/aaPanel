@@ -522,6 +522,12 @@
 				"open": "باز کردن",
 				"configurationParameters": "پارامترهای پیکربندی",
 				"active": "فعال",
+				"conflictTitle": "تداخل در محیط نصب",
+				"conflictAlertTitle": "تداخل پورت شناسایی شد",
+				"conflictAlertDescription": "پورت‌های زیر توسط برنامه‌های دیگری اشغال شده‌اند. تداخل پورت‌ها را برطرف کرده و دوباره تلاش کنید.",
+				"checkInstallFailed": "بررسی محیط نصب ناموفق بود. محیط سرور را بررسی کرده و دوباره تلاش کنید.",
+				"conflictOccupied": "اشغال‌شده",
+				"conflictProcess": "فرایند",
 				"successTip": "پس از نصب، کنسول BillionMail را باز کنید و تنظیمات دامنه، DNS و تأیید فرستنده را تکمیل کنید."
 			}
 		}

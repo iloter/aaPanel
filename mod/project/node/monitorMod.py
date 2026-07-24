@@ -216,7 +216,10 @@ class main:
         err = self.monitor_db.save_setting(node_id, data)
         if err:
             return public.return_message(-1, 0, err)
-        return public.return_message(0, 0, self.monitor_db.get_setting(node_id))
+
+        public.set_module_logs('node_monitor', 'node_monitor_save_setting')
+        return public.return_message(0, 0, "Set successfully")
+        # return public.return_message(0, 0, self.monitor_db.get_setting(node_id))
 
     def get_latest(self, get):
         node_id, node, err = self._get_node(get)
@@ -234,6 +237,9 @@ class main:
         return public.return_message(0, 0, self.monitor_db.get_snapshots(node_id, start_ts, end_ts, limit))
 
     def set_primary_target(self, get):
+        """
+        设置监控展示的 网卡/磁盘
+        """
         node_id, node, err = self._get_node(get)
         if err:
             return public.return_message(-1, 0, err)
@@ -246,9 +252,16 @@ class main:
         err = self.monitor_db.set_primary_target(node_id, target_type, target_key)
         if err:
             return public.return_message(-1, 0, err)
+        node_name = node.get("remarks", "")
+        node_ip = node.get("server_ip", "")
+        public.WriteLog("node", f"Set network card/disk displayed by node {node_name}:{node_ip}, target key: {target_key}")
+        public.set_module_logs('node_monitor', 'set_primary_target')
         return public.return_message(0, 0, "Set successfully")
 
     def save_service_targets(self, get):
+        """
+        设置服务监控
+        """
         node_id, node, err = self._get_node(get)
         if err:
             return public.return_message(-1, 0, err)
@@ -263,7 +276,10 @@ class main:
         if err:
             return public.return_message(-1, 0, err)
         self._refresh_latest_service_status(node_id, node, service_list)
-        # return public.return_message(0, 0, self._build_monitor_data(node_id, node))
+        node_name = node.get("remarks", "")
+        node_ip = node.get("server_ip", "")
+        public.WriteLog("node", f"Node {node_name}:{node_ip} - Enabled internal service monitoring")
+        public.set_module_logs('node_monitor', 'save_service_targets')
         return public.return_message(0, 0, "Set successfully")
 
     def _refresh_latest_service_status(self, node_id: int, node: Dict[str, Any], services: List[Dict[str, Any]]):

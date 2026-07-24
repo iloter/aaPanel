@@ -111,7 +111,7 @@
 			"index_12": "1 、 Bewerben Sie sich für den Name der Root -Domain (z.",
 			"index_13": "2 、 Bewerben Sie sich für den aktuellen Host als www.aapanel.com. Der vorherige Domänenname der vorherigen Ebene (z. B. Aapanel.com) wird begabt",
 			"index_14": "3 、 Bewerben Sie andere Sekundärdomainnamen (z.",
-			"index_15": "Bitte geben Sie den folgenden Domänennamen [{A}] an '{B}' die Parsen -Parameter wie folgt:",
+			"index_15": "Bitte geben Sie den folgenden Domänennamen [{a}] an '{b}' die Parsen -Parameter wie folgt:",
 			"index_16": "Das Überprüfungsergebnis wird durch [diesen Server] verifiziert und die tatsächliche Überprüfung wird durch [CA -Server] überprüft. Bitte warten Sie geduldig",
 			"index_17": "Bitte stellen Sie sicher, dass alle Elemente in der obigen Liste erfolgreich überprüft werden, und klicken",
 			"index_18": "Wenn die Authentifizierung lange fehlschlägt, ändern Sie sie bitte in [DNS -Authentifizierung] über [Authentifizierungsmethode ändern].",

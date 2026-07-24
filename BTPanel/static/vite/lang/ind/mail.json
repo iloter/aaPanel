@@ -522,6 +522,12 @@
 				"open": "Buka",
 				"configurationParameters": "Parameter konfigurasi",
 				"active": "Aktif",
+				"conflictTitle": "Konflik lingkungan instalasi",
+				"conflictAlertTitle": "Konflik port terdeteksi",
+				"conflictAlertDescription": "Port berikut digunakan oleh aplikasi lain. Atasi konflik port lalu coba lagi.",
+				"checkInstallFailed": "Pemeriksaan lingkungan instalasi gagal. Periksa lingkungan server dan coba lagi.",
+				"conflictOccupied": "Digunakan",
+				"conflictProcess": "Proses",
 				"successTip": "Buka konsol BillionMail setelah instalasi dan selesaikan pengaturan domain, DNS, dan verifikasi pengirim."
 			}
 		}

@@ -2,7 +2,7 @@
 	const hrefs = []
 	const stylesheetSelector = "link[rel=stylesheet]"
 	const loaded = new Set(Array.from(document.querySelectorAll(stylesheetSelector)).map(link => link.href))
-	const version = "1782899742524"
+	const version = "1784873523001"
 	const findLoadedLink = href => Array.from(document.querySelectorAll(stylesheetSelector)).find(link => link.href === href)
 	const removeAfterLoad = (freshLink, staleLink) => {
 		const remove = () => staleLink.remove()

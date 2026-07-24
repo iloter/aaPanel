@@ -225,6 +225,7 @@
 			"index_7": "SSH -Service einschalten",
 			"index_8": "Sind Sie sicher, den SSH -Service einzuschalten?",
 			"index_9": "Wenn Sie den SSH -Service ausschalten, werden auch alle angemeldeten Benutzer angemeldet. Weiter?",
+			"index_10": "SSH-Systemkontenverwaltung",
 			"Basic": {
 				"index_1": "SSH -Passwort -Login",
 				"index_2": "SSH -Schlüsselanmeldung",
@@ -268,6 +269,42 @@
 					"whitelist_1": "Bitte geben Sie IP ein",
 					"whitelist_2": "IP"
 				}
+			},
+			"Account": {
+				"create": "Systembenutzer erstellen",
+				"conversion_title": "SSH-Systemkontenverwaltung",
+				"overview": "Übersicht",
+				"feature_modify_password": "Passwörter von Systembenutzern ändern",
+				"feature_delete_user": "Systembenutzer löschen",
+				"feature_anti_intrusion": "Einbruchsschutz",
+				"username": "Benutzername",
+				"protection": "Rechteausweitungsschutz",
+				"log": "Befehlsprotokollierung",
+				"remark": "Bemerkungen",
+				"command_log": "Befehlsprotokolle",
+				"reset_password": "Passwort zurücksetzen",
+				"create_title": "Systembenutzer erstellen",
+				"reset_title": "Passwort zurücksetzen: {0}",
+				"password": "Passwort",
+				"new_password": "Neues Passwort",
+				"username_placeholder": "Benutzernamen eingeben",
+				"password_placeholder": "Passwort eingeben",
+				"username_invalid": "Der Benutzername muss 2 bis 20 Zeichen lang sein und darf nur Buchstaben und Zahlen enthalten. Sonderzeichen sind nicht erlaubt.",
+				"password_min": "Das Passwort muss mindestens 8 Zeichen enthalten",
+				"delete_title": "Benutzer löschen: {0}",
+				"delete_content": "Nach dem Löschen kann sich dieser Systembenutzer nicht mehr am Server anmelden. Diese Aktion kann nicht rückgängig gemacht werden.",
+				"confirm_delete": "Löschen bestätigen",
+				"tip_1": "Bei aktiviertem Rechteausweitungsschutz werden riskante Befehle eingeschränkt und protokolliert.",
+				"tip_2": "Bei deaktiviertem Rechteausweitungsschutz werden die vom Benutzer ausgeführten Befehle nur protokolliert und verfolgt.",
+				"tip_3": "Der Rechteausweitungsschutz konzentriert sich derzeit auf Risiken durch Benutzer wie www, redis und mysql.",
+				"plugin_missing": "Installieren Sie zuerst das Einbruchsschutz-Plugin, um SSH-Systemkonten zu verwalten",
+				"install_plugin": "Plugin installieren",
+				"professional_only": "Funktion der Professional Edition",
+				"professional_desc": "Die SSH-Systemkontenverwaltung umfasst das Erstellen, Löschen und Verwalten von SSH-Benutzerkonten auf dem Server. Diese Konten ermöglichen den sicheren Fernzugriff über SSH und werden normalerweise von Systemadministratoren verwaltet, damit nur autorisierte Benutzer auf den Server zugreifen können.",
+				"upgrade": "Jetzt upgraden",
+				"no_logs": "Derzeit sind keine Befehlsprotokolle verfügbar",
+				"api_create": "Systembenutzer wird erstellt, bitte warten...",
+				"api_delete": "Systembenutzer wird gelöscht, bitte warten..."
 			},
 			"Logs": {
 				"index_1": "Alle",
@@ -636,6 +673,156 @@
 						"desc": "Entdecken Sie Anomalien und Sicherheitsrisiken durch Protokollanalyse"
 					}
 				}
+			}
+		},
+		"Overview": {
+			"header": {
+				"title": "Security Overview",
+				"subtitle": "Monitor your server security posture and respond to threats before they impact your services.",
+				"systemRunning": "System running"
+			},
+			"sections": {
+				"securityScan": "Security Scan",
+				"recommendedActions": "Recommended Actions",
+				"recentSecurityEvents": "Recent Security Events",
+				"scanOverview": "Scan Overview",
+				"last7Days": "Last 7 days",
+				"scanning": "Scanning..."
+			},
+			"Api": {
+				"settingStatus": "Applying settings, please wait..."
+			},
+			"common": {
+				"noData": "No data yet"
+			},
+			"protection": {
+				"title": "Protection Status",
+				"enabledCount": "Enabled {enabled}/{total}",
+				"confirm": {
+					"enableTitle": "{name} aktivieren",
+					"enableContent": "Möchten Sie {name} wirklich aktivieren?",
+					"disableTitle": "{name} deaktivieren",
+					"disableContent": "Möchten Sie {name} wirklich deaktivieren?"
+				},
+				"names": {
+					"firewall": "Firewall",
+					"tamperCore": "Tamper-proof for Enterprise",
+					"ssh": "SSH Protection",
+					"btwaf": "Nginx WAF",
+					"fail2ban": "Fail2Ban"
+				},
+				"status": {
+					"enabled": "Enabled",
+					"disabled": "Disabled",
+					"notInstalled": "Not installed"
+				},
+				"details": {
+					"allowedPorts": "Allowed ports: ",
+					"portSeparator": ", ",
+					"monitoringPrefix": "Monitoring ",
+					"monitoringSuffix": " core files for changes",
+					"currentPort": "Current port: ",
+					"keyLogin": "Key login: ",
+					"passwordLogin": "Password login: ",
+					"blocks": "Blocks:",
+					"todayRequest": "Heutige Anfragen: ",
+					"todayMaliciousRequest": "Heutige schädliche Anfragen: ",
+					"blockedPrefix": "Blocked ",
+					"bruteForceMiddle": " brute-force attempts · ",
+					"bannedIpSuffix": " IPs banned"
+				},
+				"settings": {
+					"quickAllowPorts": "Quick allow ports",
+					"configureProduct": "Configure {name}",
+					"sshSettings": "SSH settings"
+				},
+				"forms": {
+					"portNumber": "Portnummer"
+				},
+				"ssh": {
+					"keyLoginDesc": "SSH-Anmeldung mit Schlüssel erlauben",
+					"passwordLoginDesc": "SSH-Anmeldung mit Passwort erlauben",
+					"keysTitle": "SSH-Schlüssel"
+				},
+				"attacks": {
+					"cc": "CC attacks",
+					"xss": "XSS",
+					"sql": "SQL injection"
+				}
+			},
+			"scanCards": {
+				"labels": {
+					"securityRisk": "Security Risk",
+					"malwareDetection": "Malware Detection",
+					"websiteVulnerability": "Website Vulnerability",
+					"baseline": "Baseline"
+				},
+				"waitingFirstScan": "Waiting for first scan",
+				"details": "Details →",
+				"detailsAria": "{label} details"
+			},
+			"riskLevels": {
+				"critical": "Critical",
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low",
+				"normal": "Normal"
+			},
+			"recommended": {
+				"emptyTitle": "No recommended actions",
+				"emptyDesc": "Recommended actions will be generated automatically after a security scan.",
+				"noDescription": "No recommendation details",
+				"defaultTitle": "Recommended Action",
+				"badgeItems": "{count} items",
+				"badgeZeroItems": "0 items",
+				"buttons": {
+					"fixNow": "Fix Now",
+					"resolve": "Resolve",
+					"review": "Review",
+					"view": "View"
+				}
+			},
+			"events": {
+				"title": "Recent Security Events",
+				"defaultTitle": "Security event",
+				"noEventDetails": "No event details",
+				"emptyTitle": "No security events",
+				"emptyDesc": "Your server is running normally. Security events will appear here after a scan.",
+				"allLoaded": "All security events loaded",
+				"viewAll": "View All →",
+				"autoRecord": "Events will be recorded after the first scan",
+				"filters": {
+					"all": "All categories",
+					"info": "Info",
+					"low": "Low",
+					"medium": "Medium",
+					"high": "High",
+					"critical": "Critical",
+					"searchPlaceholder": "Search security events"
+				},
+				"status": {
+					"normal": "Normal",
+					"warning": "Warning",
+					"blocked": "Blocked"
+				}
+			},
+			"health": {
+				"status": {
+					"scanning": "Scanning",
+					"pending": "Not scanned"
+				},
+				"levels": {
+					"healthy": "Healthy",
+					"good": "Good",
+					"attention": "Needs Attention",
+					"critical": "Critical"
+				},
+				"scanningDesc": "Running a full server security scan",
+				"pleaseWait": "Please wait",
+				"lastScan": "Last scan: {time}",
+				"notScanned": "No security scan has been run yet.",
+				"clickToStart": "Click Start Scan to begin.",
+				"startScan": "Start Scan"
 			}
 		},
 		"NetworkScan": {

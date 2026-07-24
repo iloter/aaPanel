@@ -9,6 +9,7 @@
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 import warnings
@@ -34,6 +35,8 @@ warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 
 class SiteModule(DataManager):
+    SITE_COMMAND_TIMEOUT = 7200
+
     def __init__(self):
         super().__init__()
         self.base_path = '/www/backup/backup_restore'
@@ -145,13 +148,105 @@ class SiteModule(DataManager):
             except:
                 pass
 
+    @staticmethod
+    def _short_text(value, max_length=1000):
+        try:
+            value = json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else str(value)
+        except Exception:
+            value = repr(value)
+        value = value.replace("\r\n", "\n").strip()
+        if len(value) > max_length:
+            value = value[-max_length:]
+        return value
+
+    def _run_backup_command(self, args, cwd=None, timeout=None):
+        try:
+            result = subprocess.run(
+                args,
+                cwd=cwd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=timeout or self.SITE_COMMAND_TIMEOUT
+            )
+            if result.returncode != 0:
+                return False, self._short_text(result.stderr)
+            return True, ""
+        except subprocess.TimeoutExpired:
+            return False, public.lang("Operation timed out")
+        except Exception as e:
+            return False, self._short_text(str(e))
+
+    def _backup_site_files(self, site, site_backup_path, site_path, last_path):
+        source_path = site.get('path')
+        if not source_path or not os.path.exists(source_path):
+            return False, public.lang("Site directory does not exist: {}").format(source_path)
+
+        backup_root = os.path.abspath(site_backup_path)
+        source_abs = os.path.abspath(source_path)
+        if backup_root == source_abs or backup_root.startswith(source_abs.rstrip(os.sep) + os.sep):
+            return False, public.lang("Site directory cannot contain backup directory: {}").format(source_path)
+
+        if os.path.exists(site_path):
+            try:
+                if os.path.isdir(site_path):
+                    shutil.rmtree(site_path)
+                else:
+                    os.remove(site_path)
+            except Exception as e:
+                return False, public.lang("Failed to clean temporary site backup directory: {}").format(str(e))
+
+        ok, err_msg = self._run_backup_command(["cp", "-rpa", source_path, site_path])
+        if not ok:
+            return False, public.lang("Failed to copy site files: {}").format(err_msg)
+
+        ok, err_msg = self._run_backup_command(["zip", "-qr", "{}.zip".format(last_path), last_path], cwd=site_backup_path)
+        if not ok:
+            return False, public.lang("Failed to compress site files: {}").format(err_msg)
+
+        site_zip = site_backup_path + last_path + ".zip"
+        if not os.path.exists(site_zip):
+            return False, public.lang("Site archive was not generated")
+
+        return True, ""
+
     def get_site_backup_conf(self, timestamp=None):
+        backup_data = self.DEFAULT_BACKUP_DATA
+        site_ids = ["ALL"]
+        wp_site_ids = ["ALL"]
+        if timestamp is not None:
+            backup_conf = self.get_backup_conf(str(timestamp))
+            if backup_conf:
+                backup_data = self.normalize_backup_data(backup_conf.get("backup_data"))
+                site_ids = self.normalize_backup_id_list(backup_conf.get("site_id"))
+                wp_site_id_value = backup_conf.get("wp_site_id")
+                if wp_site_id_value is None:
+                    wp_site_id_value = backup_conf.get("wp_id")
+                wp_site_ids = self.normalize_backup_id_list(wp_site_id_value)
         # todo node, 待优化
         site_data = public.M('sites').where("project_type != ?", "Node").field('name,path,project_type,id,ps').select()
         domian_data = public.M('domain').field('name,id,pid,id,port').select()
         wp_onekey = public.M('wordpress_onekey').field('s_id,prefix,user,pass').select()
+        if isinstance(site_data, str):
+            site_data = []
+        if isinstance(domian_data, str):
+            domian_data = []
+        if isinstance(wp_onekey, str):
+            wp_onekey = []
 
-        filtered_sites = [site for site in site_data]
+        include_site = self.backup_type_enabled(backup_data, "site")
+        include_wp_tools = self.backup_type_enabled(backup_data, "wp_tools")
+        site_id_set = set(str(site_id) for site_id in site_ids)
+        wp_site_id_set = set(str(wp_site_id) for wp_site_id in wp_site_ids)
+        filtered_sites = []
+        for site in site_data:
+            site_id = str(site.get("id"))
+            is_wp = site.get("project_type") == "WP2"
+            if is_wp:
+                if include_wp_tools and ("ALL" in wp_site_id_set or site_id in wp_site_id_set):
+                    filtered_sites.append(site)
+            elif include_site and ("ALL" in site_id_set or site_id in site_id_set):
+                filtered_sites.append(site)
         filtered_domain = [name for name in domian_data]
 
         pid_map = {}
@@ -240,14 +335,22 @@ class SiteModule(DataManager):
             self.update_backup_data_list(timestamp, data_list)
 
             # 备份网站项目
-            public.ExecShell("cp -rpa {} {}".format(site['path'], site_path))
+            backup_ok, backup_err_msg = self._backup_site_files(site, site_backup_path, site_path, last_path)
+            if not backup_ok:
+                site['status'] = 3
+                site['msg'] = backup_err_msg
+                site['err_msg'] = backup_err_msg
+                new_log_str = public.lang("{} project {} Reason: {}").format(
+                    site['project_type'], site['name'], backup_err_msg
+                )
+                self.replace_log(log_str, new_log_str, 'backup')
+                self.update_backup_data_list(timestamp, data_list)
+                continue
+
             site_zip = site_backup_path + last_path + ".zip"
-            public.ExecShell("cd {} && zip -r {}.zip {}".format(site_backup_path, last_path, last_path))
-            if os.path.exists(site_zip):
-                site_zip_size = public.ExecShell("du -sb {}".format(site_zip))[0].split("\t")[0]
-                site['data_file_name'] = site_zip
-                site['size'] = site_zip_size
-                site['zip_sha256'] = self.get_file_sha256(site_zip)
+            site['data_file_name'] = site_zip
+            site['size'] = os.path.getsize(site_zip)
+            site['zip_sha256'] = self.get_file_sha256(site_zip)
 
             # 创建配置文件备份目录
             webserver_conf_path = ["apache", "cert", "config", "nginx", "open_basedir",
@@ -267,7 +370,30 @@ class SiteModule(DataManager):
             # 打包网站配置文件
             site_name = site['name']
             site_conf_zip = site_backup_path + site_name + "_conf.zip"
-            public.ExecShell("cd {} && zip -r {}_conf.zip {}_conf".format(site_backup_path, site_name, site_name))
+            backup_ok, backup_err_msg = self._run_backup_command(
+                ["zip", "-qr", "{}_conf.zip".format(site_name), "{}_conf".format(site_name)],
+                cwd=site_backup_path
+            )
+            if not backup_ok:
+                site['status'] = 3
+                site['msg'] = public.lang("Failed to compress site configuration: {}").format(backup_err_msg)
+                site['err_msg'] = site['msg']
+                new_log_str = public.lang("{} project {} Reason: {}").format(
+                    site['project_type'], site['name'], site['msg']
+                )
+                self.replace_log(log_str, new_log_str, 'backup')
+                self.update_backup_data_list(timestamp, data_list)
+                continue
+            if not os.path.exists(site_conf_zip):
+                site['status'] = 3
+                site['msg'] = public.lang("Site configuration archive was not generated")
+                site['err_msg'] = site['msg']
+                new_log_str = public.lang("{} project {} Reason: {}").format(
+                    site['project_type'], site['name'], site['msg']
+                )
+                self.replace_log(log_str, new_log_str, 'backup')
+                self.update_backup_data_list(timestamp, data_list)
+                continue
             if os.path.exists(site_conf_zip):
                 site['conf_file_name'] = site_conf_zip
                 site['zip_sha256'] = self.get_file_sha256(site_conf_zip)
@@ -726,7 +852,8 @@ class SiteModule(DataManager):
         restore_data = self.get_restore_data_list(timestamp)
         site_backup_path = self.base_path + "/{timestamp}_backup/site/".format(timestamp=timestamp)
         # 还原site环境配置, 全局配置
-        self.restore_site_config(site_backup_path)
+        if not restore_data.get("restore_selection"):
+            self.restore_site_config(site_backup_path)
 
         if not os.path.exists(site_backup_path):
             self.print_log(public.lang("Site backup directory does not exist: {}").format(site_backup_path), 'restore')

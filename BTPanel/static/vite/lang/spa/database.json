@@ -7,7 +7,7 @@
 		"index_5": "Sincronizar todo",
 		"index_6": "Obtenga DB del servidor",
 		"index_7": {
-			"index_1": "Después de agregar la base de datos, asegúrese de que la página {BTN_} agrega tareas de copia de seguridad programadas para garantizar la seguridad de su datos.",
+			"index_1": "Después de agregar la base de datos, asegúrese de que la página {btn_} agrega tareas de copia de seguridad programadas para garantizar la seguridad de su datos.",
 			"index_2": "Cron"
 		},
 		"index_8": "phpmyadmin [{0}]",
@@ -18,7 +18,7 @@
 		"index_13": "Nombre de usuario",
 		"index_14": "Contraseña",
 		"index_15": {
-			"index_1": "Obtenga PASSWD falló, haga clic en {Error}!",
+			"index_1": "Obtenga PASSWD falló, haga clic en {error}!",
 			"index_2": "reiniciar"
 		},
 		"index_16": "Respaldo",
@@ -197,9 +197,9 @@
 			"index_8": "Si el acceso a través del panel no responde, use [Acceso público] para acceder a PhPMyAdmin",
 			"index_9": "Si el acceso aparece 502, verifique el [estado de php] o intente [cambiar la versión php]",
 			"index_10": "Acceso sin contraseña",
-			"index_11": "{0} servicio phpmyadmin",
+			"index_11": "Acceso sin contraseña",
 			"index_12": "¿Estás seguro de {0} Servicio PhPMyAdmin?",
-			"index_13": "Saltando phpmyadmin, por favor espera ...",
+			"index_13": "¿Seguro que desea {0} el servicio phpMyAdmin?",
 			"index_14": "El acceso a la contraseña de PhPMyAdmin ha sido habilitado, utilice [Acceso público]",
 			"index_15": "Puerto de acceso",
 			"index_16": "Abrir SSL",

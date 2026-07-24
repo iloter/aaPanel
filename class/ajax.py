@@ -794,6 +794,17 @@ class ajax:
     #取PHP配置
     def GetPHPConfig(self,get):
         import re,json
+        def match_php_ext_search(lib, search):
+            if not search:
+                return True
+            search_text = ' '.join([
+                str(lib.get('name', '')),
+                str(lib.get('type', '')),
+                str(lib.get('msg', '')),
+            ]).lower()
+            return search in search_text
+
+        search = str(getattr(get, 'search', '')).strip().lower()
         filename = public.GetConfigValue('setup_path') + '/php/' + get.version + '/etc/php.ini'
         if public.get_webserver() == 'openlitespeed':
             filename = '/usr/local/lsws/lsphp{}/etc/php/{}.{}/litespeed/php.ini'.format(get.version,get.version[0],get.version[1])
@@ -855,7 +866,8 @@ class ajax:
                     lib['status'] = False
                 else:
                     lib['status'] = True
-                
+            if not match_php_ext_search(lib, search):
+                continue
             libs.append(lib)
         
         data['libs'] = libs
